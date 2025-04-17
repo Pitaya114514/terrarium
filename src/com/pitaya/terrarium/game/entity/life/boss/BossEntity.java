@@ -1,0 +1,20 @@
+package com.pitaya.terrarium.game.entity.life.boss;
+
+import com.pitaya.terrarium.game.entity.Box;
+import com.pitaya.terrarium.game.entity.Entity;
+import com.pitaya.terrarium.game.entity.MoveController;
+import com.pitaya.terrarium.game.entity.life.LivingEntity;
+
+public abstract class BossEntity extends LivingEntity {
+    public BossEntity(String name, Box box, MoveController moveController, float x, float y, double defaultHealth, double defense, int invincibilityFrame) {
+        super(name, box, moveController, x, y, defaultHealth, defense, invincibilityFrame);
+    }
+
+    @Override
+    public void damage(Entity source, double value) {
+        if (source instanceof BossEntity) {
+            return;
+        }
+        super.damage(source, value);
+    }
+}
