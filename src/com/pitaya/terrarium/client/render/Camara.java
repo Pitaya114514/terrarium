@@ -1,13 +1,15 @@
 package com.pitaya.terrarium.client.render;
 
 import com.pitaya.terrarium.Main;
+import com.pitaya.terrarium.game.tool.PosTool;
 import org.joml.Vector2f;
 import org.lwjgl.opengl.GL33;
 
 public final class Camara {
-    public Vector2f pos = new Vector2f();
+    private Vector2f pos = new Vector2f();
     public final float aspectRatio = Float.parseFloat(Main.getClient().properties.getProperty("game-width")) /
             Float.parseFloat(Main.getClient().properties.getProperty("game-height"));
+    private boolean isSmoothCamara = Boolean.parseBoolean(Main.getClient().properties.getProperty("smooth-camara"));
     private int width;
     private int height;
     private final Vector2f returnPos1 = new Vector2f();
@@ -18,7 +20,7 @@ public final class Camara {
             this.height = height;
             this.width = (int) (aspectRatio * height);
         } else {
-            setHeight(600);
+            setHeight(Integer.parseInt(Main.getClient().properties.getProperty("game-height")));
         }
     }
 
@@ -27,7 +29,7 @@ public final class Camara {
             this.width = width;
             this.height = (int) (width / aspectRatio);
         } else {
-            setWidth(800);
+            setWidth(Integer.parseInt(Main.getClient().properties.getProperty("game-width")));
         }
     }
 
@@ -54,5 +56,19 @@ public final class Camara {
         }
         GL33.glEnd();
         GL33.glPopMatrix();
+    }
+
+    public void render(Renderable renderable, Vector2f windowSize) {
+        renderable.render(windowSize);
+    }
+
+    public void setPos(Vector2f pos) {
+        if (isSmoothCamara) {
+            int quadrant = PosTool.getQuadrant(this.pos, pos);
+            float slope = PosTool.getSlope(this.pos, pos);
+            PosTool.movePos(this.pos, quadrant, slope, 3.0f);
+        } else {
+            this.pos.set(pos);
+        }
     }
 }

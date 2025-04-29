@@ -1,4 +1,4 @@
-package com.pitaya.terrarium.client;
+package com.pitaya.terrarium.client.window;
 
 import com.pitaya.terrarium.Main;
 

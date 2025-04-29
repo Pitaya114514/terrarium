@@ -1,4 +1,4 @@
-package com.pitaya.terrarium.game;
+package com.pitaya.terrarium.game.tool;
 
 import org.joml.Vector2f;
 

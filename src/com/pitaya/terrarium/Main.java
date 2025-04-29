@@ -7,7 +7,6 @@ import org.apache.logging.log4j.Logger;
 import java.util.Objects;
 
 public class Main {
-    public static final Logger LOGGER = LogManager.getLogger(Main.class);
     private static TerrariumClient client;
     private static TerrariumServer server;
 

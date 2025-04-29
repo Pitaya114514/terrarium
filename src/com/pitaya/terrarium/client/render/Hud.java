@@ -4,37 +4,44 @@ import com.pitaya.terrarium.Main;
 import org.joml.Vector2f;
 import org.lwjgl.opengl.GL33;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 public final class Hud {
-    public static HashSet<HudItem> getDefaultHudItems() {
-        HashSet<HudItem> h = new HashSet<>();
-        h.add(new HudItem("PlayerHealthBar", true) {
+    public enum HudItems {
+        PLAYER_HEALTH_BAR(new RenderModule("PlayerHealthBar", true) {
             @Override
-            public void render() {
+            public void renderFunction(Vector2f windowSize) {
                 GL33.glPushMatrix();
                 GL33.glColor3f(1.0f, 0.1f, 0.0f);
                 GL33.glBegin(GL33.GL_QUADS);
                 float health = (float) (5 + Main.getClient().player.entity().getHealth());
-                GL33.glVertex2f(5, 5);
-                GL33.glVertex2f(5, 20);
-                GL33.glVertex2f(health, 20);
-                GL33.glVertex2f(health, 5);
+                GL33.glVertex2f(windowSize.x() - 130 + 5, 5);
+                GL33.glVertex2f(windowSize.x() - 130 + 5, 20);
+                GL33.glVertex2f(windowSize.x() - 130 + health, 20);
+                GL33.glVertex2f(windowSize.x() - 130 + health, 5);
                 GL33.glEnd();
                 GL33.glPopMatrix();
             }
-        });
-        return h;
+        }),
+
+        BOSS_HEALTH_BAR(new BossHealthBar(true)),
+
+        CHAT_BAR(new CharBar(false));
+
+        private RenderModule renderModule;
+
+        HudItems(RenderModule renderModule) {
+            this.renderModule = renderModule;
+        }
+
+        public RenderModule getRenderModule() {
+            return renderModule;
+        }
+
+        public void setRenderModule(RenderModule renderModule) {
+            this.renderModule = renderModule;
+        }
     }
 
-    private final HashSet<HudItem> hudItems;
     private boolean isEnable;
-
-    public Hud(HashSet<HudItem> hudItems) {
-        this.hudItems = hudItems;
-    }
 
     public boolean isEnable() {
         return isEnable;
@@ -44,7 +51,24 @@ public final class Hud {
         isEnable = enable;
     }
 
-    public Set<HudItem> getHudItems() {
-        return Collections.unmodifiableSet(hudItems);
+    public void render(Vector2f pos1, Vector2f pos2, Vector2f pos3, Vector2f pos4, int type, float r, float g, float b) {
+        GL33.glPushMatrix();
+        GL33.glColor3f(r,g,b);
+        GL33.glBegin(type);
+        GL33.glVertex2f(pos1.x(), pos1.y());
+        GL33.glVertex2f(pos2.x(), pos2.y());
+        if (type == GL33.GL_TRIANGLES) {
+            GL33.glVertex2f(pos3.x(), pos3.y());
+        }
+        if (type == GL33.GL_QUADS) {
+            GL33.glVertex2f(pos3.x(), pos3.y());
+            GL33.glVertex2f(pos4.x(), pos4.y());
+        }
+        GL33.glEnd();
+        GL33.glPopMatrix();
+    }
+
+    public void render(Renderable renderable, Vector2f windowSize) {
+        renderable.render(windowSize);
     }
 }

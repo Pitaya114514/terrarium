@@ -1,8 +1,7 @@
 package com.pitaya.terrarium.game.entity;
 
 import com.pitaya.terrarium.Main;
-import com.pitaya.terrarium.game.PosTool;
-import com.pitaya.terrarium.game.entity.life.LivingEntity;
+import com.pitaya.terrarium.game.tool.PosTool;
 import org.joml.Vector2f;
 
 public final class MoveController {
