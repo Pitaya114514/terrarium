@@ -2,17 +2,22 @@ package com.pitaya.terrarium.client.render;
 
 import com.pitaya.terrarium.Main;
 import com.pitaya.terrarium.game.entity.Entity;
-import com.pitaya.terrarium.game.entity.barrage.Shell;
+import com.pitaya.terrarium.game.entity.barrage.Bullet;
 import com.pitaya.terrarium.game.entity.life.LivingEntity;
-import com.pitaya.terrarium.game.entity.life.boss.BossEntity;
+import com.pitaya.terrarium.game.entity.life.mob.boss.BossEntity;
 import com.pitaya.terrarium.game.tool.Counter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.joml.Vector2f;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL33;
 import org.lwjgl.system.MemoryUtil;
 
+import java.util.ConcurrentModificationException;
+
 public final class Renderer {
+    public final static Logger LOGGER = LogManager.getLogger(Renderer.class);
     static {
         if (!GLFW.glfwInit()) {
             throw new IllegalStateException("Unable to initialize GLFW");
@@ -77,13 +82,16 @@ public final class Renderer {
         Vector2f pos1 = new Vector2f(-999, 0);
         Vector2f pos2 = new Vector2f(999, 0);
         camara.render(pos1, pos2, null, null, GL33.GL_LINES, 0.6f, 1.0f, 0.8f);
-        for (Entity entity : Main.getClient().terrarium.getEntitySet()) {
-            camara.render(entity.box.getTopLeft(), entity.box.getBottomLeft(), entity.box.getBottomRight(), entity.box.getTopRight(), GL33.GL_QUADS, 0.6f, 0.7f, 0.8f);
-            if (entity instanceof BossEntity) {
-                ((BossHealthBar) Hud.HudItems.BOSS_HEALTH_BAR.getRenderModule()).setTargetEntity((LivingEntity) entity);
+        try {
+            for (Entity entity : Main.getClient().terrarium.getEntitySet()) {
+                camara.render(entity.box.getTopLeft(), entity.box.getBottomLeft(), entity.box.getBottomRight(), entity.box.getTopRight(), GL33.GL_QUADS, 0.6f, 0.7f, 0.8f);
+                if (entity instanceof BossEntity) {
+                    ((BossHealthBar) Hud.HudItems.BOSS_HEALTH_BAR.getRenderModule()).setTargetEntity((LivingEntity) entity);
+                }
             }
+        } catch (ConcurrentModificationException e) {
+            LOGGER.error(e);
         }
-
     }
 
     private void init() {
@@ -94,9 +102,11 @@ public final class Renderer {
             throw new IllegalStateException("Unable to create game window");
         }
         GLFW.glfwSetMouseButtonCallback(window, (window1, button, action, mods) -> {
-            switch (action) {
-                case GLFW.GLFW_MOUSE_BUTTON_LEFT -> {
-                    Main.getClient().terrarium.addEntity(new Shell(Main.getClient().player.entity().position, Main.getClient().player.cursorPos));
+            if (action != GLFW.GLFW_RELEASE) {
+                switch (button) {
+                    case GLFW.GLFW_MOUSE_BUTTON_LEFT -> {
+                        Main.getClient().terrarium.useItem(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
+                    }
                 }
             }
         });
@@ -105,19 +115,23 @@ public final class Renderer {
                 case GLFW.GLFW_KEY_A -> {
                     Main.getClient().player.isMovingToLeft = action != GLFW.GLFW_RELEASE && !Main.getClient().player.isMovingToRight;
                 }
+
                 case GLFW.GLFW_KEY_D -> {
                     Main.getClient().player.isMovingToRight = action != GLFW.GLFW_RELEASE && !Main.getClient().player.isMovingToLeft;
                 }
+
                 case GLFW.GLFW_KEY_SPACE -> {
                     if (action != GLFW.GLFW_RELEASE) {
                         Main.getClient().player.entity().moveController.jump(200);
                     }
                 }
+
                 case GLFW.GLFW_KEY_F11 -> {
                     if (action != GLFW.GLFW_RELEASE) {
                         hud.setEnable(!hud.isEnable());
                     }
                 }
+
                 case GLFW.GLFW_KEY_ENTER -> {
                     if (action != GLFW.GLFW_RELEASE) {
                         CharBar charBar = (CharBar) Hud.HudItems.CHAT_BAR.getRenderModule();
@@ -128,8 +142,57 @@ public final class Renderer {
                         charBar.setEnable(!charBar.isEnable());
                     }
                 }
+
                 case GLFW.GLFW_KEY_H -> {
                     Main.getClient().player.entity().setHealth(Main.getClient().player.entity().getHealth() + 50);
+                }
+            }
+            if (action != GLFW.GLFW_RELEASE) {
+                switch (key) {
+                    case GLFW.GLFW_KEY_1 -> {
+                        Main.getClient().player.backpackIndex = 0;
+                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
+                    }
+
+                    case GLFW.GLFW_KEY_2 -> {
+                        Main.getClient().player.backpackIndex = 1;
+                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
+                    }
+
+                    case GLFW.GLFW_KEY_3 -> {
+                        Main.getClient().player.backpackIndex = 2;
+                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
+                    }
+
+                    case GLFW.GLFW_KEY_4 -> {
+                        Main.getClient().player.backpackIndex = 3;
+                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
+                    }
+
+                    case GLFW.GLFW_KEY_5 -> {
+                        Main.getClient().player.backpackIndex = 4;
+                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
+                    }
+
+                    case GLFW.GLFW_KEY_6 -> {
+                        Main.getClient().player.backpackIndex = 5;
+                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
+                    }
+
+                    case GLFW.GLFW_KEY_7 -> {
+                        Main.getClient().player.backpackIndex = 6;
+                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
+                    }
+
+                    case GLFW.GLFW_KEY_8 -> {
+                        Main.getClient().player.backpackIndex = 7;
+                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
+                    }
+
+                    case GLFW.GLFW_KEY_9 -> {
+                        Main.getClient().player.backpackIndex = 8;
+                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
+                    }
                 }
             }
         });

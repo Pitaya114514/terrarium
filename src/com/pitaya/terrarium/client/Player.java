@@ -8,6 +8,7 @@ public final class Player {
     public final Vector2f cursorPos = new Vector2f();
     public boolean isMovingToLeft;
     public boolean isMovingToRight;
+    public int backpackIndex;
 
     public Player(String name) {
         this.entity = new PlayerEntity(name, 0, 100);

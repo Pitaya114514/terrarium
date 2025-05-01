@@ -5,8 +5,8 @@ import com.pitaya.terrarium.game.entity.Actionable;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.life.LivingEntity;
 import com.pitaya.terrarium.game.entity.life.PlayerEntity;
-import com.pitaya.terrarium.game.entity.life.boss.BossEntity;
-import com.pitaya.terrarium.game.entity.life.boss.EyeOfCthulhuEntity;
+import com.pitaya.terrarium.game.entity.life.mob.boss.BossEntity;
+import com.pitaya.terrarium.game.entity.life.mob.boss.SkeletronEntity;
 import com.pitaya.terrarium.game.tool.Counter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -88,12 +88,6 @@ public class World implements Runnable {
                         }
                     }
                 }
-            }
-        });
-        addTickEventListeners(event -> {
-            if (time == 100) {
-                EyeOfCthulhuEntity entity = new EyeOfCthulhuEntity(new Vector2f(0, 100), Main.getClient().player.cursorPos);
-                addEntity(entity);
             }
         });
     }

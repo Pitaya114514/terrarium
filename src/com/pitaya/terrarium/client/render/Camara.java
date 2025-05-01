@@ -66,7 +66,7 @@ public final class Camara {
         if (isSmoothCamara) {
             boolean direction = PosTool.getDirection(this.pos, pos);
             float slope = PosTool.getSlope(this.pos, pos);
-            double distance = PosTool.getDistance(this.pos, pos);
+            double distance = this.pos.distance(pos);
             if (distance < 3.0f) {
                 PosTool.movePos(this.pos, direction, slope, (float) distance);
             } else {

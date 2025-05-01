@@ -1,4 +1,4 @@
-package com.pitaya.terrarium.game.entity.life.boss;
+package com.pitaya.terrarium.game.entity.life.mob.boss;
 
 import com.pitaya.terrarium.game.entity.Actionable;
 import com.pitaya.terrarium.game.entity.Box;
@@ -12,11 +12,12 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class SlimeKingEntity extends BossEntity implements Actionable {
     public enum Action {
-        DEFAULT, CHASING
+        DEFAULT, CHASING, TELEPORTING
     }
 
-    public SlimeKingEntity(float x, float y) {
-        super("Slime King", new Box(200, 155, 20), new MoveController(false), x, y, 1000, 20, 5);
+    public SlimeKingEntity(Vector2f pos, Vector2f target) {
+        super("Slime King", new Box(200, 155, 20), new MoveController(false), pos.x, pos.y, 145400, 20, 5);
+        setTarget(target);
     }
 
     public Action actionState = Action.DEFAULT;
@@ -24,11 +25,15 @@ public class SlimeKingEntity extends BossEntity implements Actionable {
 
     @Override
     public void action(World world) {
-        if (target != null) {
-            actionState = Action.CHASING;
-        } else {
+        if (target == null) {
             actionState = Action.DEFAULT;
         }
+        if (position.distance(target) > 700) {
+            actionState = Action.TELEPORTING;
+        } else {
+            actionState = Action.CHASING;
+        }
+
         switch (actionState) {
             case CHASING -> {
                 if (!this.moveController.isFloating()) {
@@ -36,6 +41,9 @@ public class SlimeKingEntity extends BossEntity implements Actionable {
                 } else {
                     this.moveController.moveHorizontallyTo(target.x() - position.x() > 0, 0.5f);
                 }
+            }
+            case TELEPORTING -> {
+                moveController.teleportTo(target.x, target.y + 90);
             }
             case DEFAULT -> {
                 for (Entity entity : world.entityList) {

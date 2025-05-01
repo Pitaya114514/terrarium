@@ -1,8 +1,7 @@
 package com.pitaya.terrarium;
+
 import com.pitaya.terrarium.client.TerrariumClient;
 import com.pitaya.terrarium.server.TerrariumServer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.Objects;
 

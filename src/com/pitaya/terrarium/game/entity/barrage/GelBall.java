@@ -1,6 +1,5 @@
 package com.pitaya.terrarium.game.entity.barrage;
 
-import com.pitaya.terrarium.Main;
 import com.pitaya.terrarium.game.entity.Actionable;
 import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.MoveController;

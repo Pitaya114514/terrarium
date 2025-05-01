@@ -1,15 +1,15 @@
-package com.pitaya.terrarium.game.entity.life;
+package com.pitaya.terrarium.game.entity.life.mob;
 
 import com.pitaya.terrarium.game.entity.Actionable;
 import com.pitaya.terrarium.game.entity.Box;
-import com.pitaya.terrarium.game.entity.MoveController;
-import com.pitaya.terrarium.game.tool.PosTool;
 import com.pitaya.terrarium.game.entity.Entity;
-import com.pitaya.terrarium.game.entity.life.boss.EyeOfCthulhuEntity;
+import com.pitaya.terrarium.game.entity.MoveController;
+import com.pitaya.terrarium.game.entity.life.mob.boss.EyeOfCthulhuEntity;
+import com.pitaya.terrarium.game.tool.PosTool;
 import com.pitaya.terrarium.game.world.World;
 import org.joml.Vector2f;
 
-public class ServantOfCthulhuEntity extends LivingEntity implements Actionable {
+public class ServantOfCthulhuEntity extends MobEntity implements Actionable {
     private final Vector2f target = new Vector2f();
 
     public ServantOfCthulhuEntity(Vector2f position, Vector2f target) {

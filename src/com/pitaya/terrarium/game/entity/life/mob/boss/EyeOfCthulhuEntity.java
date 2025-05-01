@@ -1,12 +1,11 @@
-package com.pitaya.terrarium.game.entity.life.boss;
+package com.pitaya.terrarium.game.entity.life.mob.boss;
 
-import com.pitaya.terrarium.Main;
 import com.pitaya.terrarium.game.entity.Actionable;
 import com.pitaya.terrarium.game.entity.Box;
-import com.pitaya.terrarium.game.entity.MoveController;
-import com.pitaya.terrarium.game.entity.life.ServantOfCthulhuEntity;
-import com.pitaya.terrarium.game.tool.PosTool;
 import com.pitaya.terrarium.game.entity.Entity;
+import com.pitaya.terrarium.game.entity.MoveController;
+import com.pitaya.terrarium.game.entity.life.mob.ServantOfCthulhuEntity;
+import com.pitaya.terrarium.game.tool.PosTool;
 import com.pitaya.terrarium.game.world.World;
 import org.joml.Vector2f;
 
@@ -28,7 +27,7 @@ public class EyeOfCthulhuEntity extends BossEntity implements Actionable {
     private boolean isEnraged;
     private boolean si;
     public EyeOfCthulhuEntity(Vector2f pos, Vector2f target) {
-        super("Eye of Cthulhu", new Box(100, 100, 30), new MoveController(true), pos.x, pos.y, 8152, 5, 10);
+        super("Eye of Cthulhu", new Box(100, 100, 30), new MoveController(true), pos.x, pos.y, 98152, 5, 10);
         setTarget(target);
         slope = PosTool.getSlope(position, this.target);
         direction = PosTool.getDirection(position, this.target);

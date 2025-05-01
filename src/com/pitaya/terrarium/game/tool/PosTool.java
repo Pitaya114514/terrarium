@@ -2,6 +2,8 @@ package com.pitaya.terrarium.game.tool;
 
 import org.joml.Vector2f;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public final class PosTool {
     private PosTool() {
     }
@@ -14,8 +16,10 @@ public final class PosTool {
         return destination.x > yourPos.x;
     }
 
-    public static double getDistance(Vector2f pos1, Vector2f pos2) {
-        return pos1.distance(pos2);
+    public static Vector2f getRandomPos(Vector2f yourPos, float range) {
+        float x = ThreadLocalRandom.current().nextFloat() * 2 * range + yourPos.x() - range;
+        float y = ThreadLocalRandom.current().nextFloat() * 2 * range + yourPos.y() - range;
+        return new Vector2f(x, y);
     }
 
     public static void movePos(Vector2f yourPos, boolean direction, float slope, float speed) {

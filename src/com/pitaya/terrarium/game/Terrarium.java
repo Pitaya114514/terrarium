@@ -1,12 +1,11 @@
 package com.pitaya.terrarium.game;
 
-import com.pitaya.terrarium.Main;
 import com.pitaya.terrarium.game.entity.Entity;
+import com.pitaya.terrarium.game.item.Item;
 import com.pitaya.terrarium.game.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashSet;
 import java.util.List;
 
 public class Terrarium {
@@ -31,6 +30,21 @@ public class Terrarium {
 
     public void addEntity(Entity entity) {
         mainWorld.addEntity(entity);
+    }
+
+    public void useItem(Item item) {
+        if (item != null) {
+            item.use(mainWorld);
+        }
+    }
+
+    public Entity getEntityInRange(Entity entity, float range) {
+        for (Entity e : mainWorld.entityList) {
+            if (e.getClass() != entity.getClass() && entity.position.distance(e.position) <= range) {
+                return e;
+            }
+        }
+        return null;
     }
 
     public void removeEntity(Entity entity) {

@@ -1,6 +1,5 @@
 package com.pitaya.terrarium.client;
 
-import com.pitaya.terrarium.Main;
 import com.pitaya.terrarium.client.network.ClientCommunicator;
 import com.pitaya.terrarium.client.network.Server;
 import com.pitaya.terrarium.client.render.Renderer;
