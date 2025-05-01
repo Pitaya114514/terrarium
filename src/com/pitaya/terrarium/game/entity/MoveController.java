@@ -23,7 +23,7 @@ public final class MoveController {
     }
 
     public void moveTo(Vector2f targetPos, float speed) {
-        PosTool.movePos(pos, PosTool.getQuadrant(pos, targetPos), PosTool.getSlope(pos, targetPos), speed);
+        PosTool.movePos(pos, PosTool.getDirection(pos, targetPos), PosTool.getSlope(pos, targetPos), speed);
     }
 
     public void moveHorizontallyTo(boolean isRight, float speed) {

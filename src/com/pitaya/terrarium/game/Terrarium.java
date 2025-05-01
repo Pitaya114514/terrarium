@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.HashSet;
+import java.util.List;
 
 public class Terrarium {
     public static final Logger LOGGER = LogManager.getLogger(Terrarium.class);
@@ -36,10 +37,16 @@ public class Terrarium {
         mainWorld.removeEntity(entity);
     }
 
-    public void sendMassage(String message) { mainWorld.chatroom.sendMessage(message); }
+    public void sendMassage(String message) {
+        mainWorld.chatroom.sendMessage(message);
+    }
 
-    public HashSet<Entity> getEntitySet() {
-        return mainWorld.syncEntitySet;
+    public int getTps() {
+        return mainWorld.getTps();
+    }
+
+    public List<Entity> getEntitySet() {
+        return mainWorld.entityList;
     }
 
     public int getWorldGravity() {

@@ -1,18 +1,19 @@
 package com.pitaya.terrarium.game.world;
 
+import com.pitaya.terrarium.Main;
 import com.pitaya.terrarium.game.entity.Actionable;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.life.LivingEntity;
+import com.pitaya.terrarium.game.entity.life.PlayerEntity;
 import com.pitaya.terrarium.game.entity.life.boss.BossEntity;
-import com.pitaya.terrarium.game.entity.life.boss.SlimeKingEntity;
+import com.pitaya.terrarium.game.entity.life.boss.EyeOfCthulhuEntity;
 import com.pitaya.terrarium.game.tool.Counter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.joml.Vector2f;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class World implements Runnable {
     public static final Logger LOGGER = LogManager.getLogger(World.class);
@@ -20,8 +21,9 @@ public class World implements Runnable {
     public int gravity;
     public int time;
     public boolean stopFlag = false;
-    public HashSet<Entity> entitySet = new HashSet<>();
-    public HashSet<Entity> syncEntitySet = new HashSet<>();
+    public final List<Entity> entityList = new ArrayList<>();
+    public final List<Vector2f> centerPosList = new ArrayList<>();
+    private final List<Entity> syncEntityList = new ArrayList<>();
     public final Chatroom chatroom;
     private Counter tpsCounter;
 
@@ -40,10 +42,19 @@ public class World implements Runnable {
             }
         });
         addTickEventListeners(event -> {
-            for (Entity entity : entitySet) {
+            for (int i = 0; i < entityList.size(); i++) {
+                Entity entity = entityList.get(i);
+                for (Vector2f centerPos : centerPosList) {
+                    if (centerPos.distance(entity.position) > 1000) {
+                        removeEntity(entity);
+                    }
+                }
                 entity.time++;
-                if (entity instanceof LivingEntity) {
-                    if (((LivingEntity) entity).getHealth() <= 0) {
+                if (entity instanceof LivingEntity && ((LivingEntity) entity).getHealth() <= 0) {
+                    if (entity instanceof PlayerEntity) {
+                        ((PlayerEntity) entity).setHealth(((PlayerEntity) entity).defaultHealth);
+                        entity.position.set(0, 100);
+                    } else {
                         removeEntity(entity);
                     }
                 }
@@ -66,7 +77,7 @@ public class World implements Runnable {
                     ((Actionable) entity).action(this);
                 }
                 if (entity.box.damage > 0) {
-                    for (Entity targetEntity : entitySet) {
+                    for (Entity targetEntity : entityList) {
                         if (entity != targetEntity && targetEntity instanceof LivingEntity) {
                             boolean xOverlap = (targetEntity.box.getTopRight().x >= entity.box.getBottomLeft().x) && (targetEntity.box.getBottomLeft().x <= entity.box.getTopRight().x);
                             boolean yOverlap = (targetEntity.box.getTopRight().y >= entity.box.getBottomLeft().y) && (targetEntity.box.getBottomLeft().y <= entity.box.getTopRight().y);
@@ -81,7 +92,7 @@ public class World implements Runnable {
         });
         addTickEventListeners(event -> {
             if (time == 100) {
-                SlimeKingEntity entity = new SlimeKingEntity(0, 200);
+                EyeOfCthulhuEntity entity = new EyeOfCthulhuEntity(new Vector2f(0, 100), Main.getClient().player.cursorPos);
                 addEntity(entity);
             }
         });
@@ -112,24 +123,26 @@ public class World implements Runnable {
         tpsCounter.cancel();
     }
 
-    @SuppressWarnings("unchecked")
     private void update() {
         time++;
-        entitySet = (HashSet<Entity>) syncEntitySet.clone();
+        entityList.addAll(syncEntityList);
+        syncEntityList.clear();
         for (WorldListener listener : tickEventListeners) {
             listener.trigger(new WorldEvent(this));
         }
     }
 
     public void addEntity(Entity entity) {
-        syncEntitySet.add(entity);
+        syncEntityList.add(entity);
         if (entity instanceof BossEntity) {
             chatroom.sendMessage(String.format("%s已苏醒！", entity.name));
+        } else if (entity instanceof PlayerEntity) {
+            centerPosList.add(entity.position);
         }
     }
 
     public void removeEntity(Entity entity) {
-        syncEntitySet.remove(entity);
+        entityList.remove(entity);
         if (entity instanceof BossEntity) {
             chatroom.sendMessage(String.format("%s已被打败！\n", entity.name));
         }

@@ -1,0 +1,23 @@
+Manifest-Version: 1.0
+Main-Class: com.pitaya.terrarium.Main
+Class-Path: log4j-api-2.12.4.jar log4j-core-2.12.4.jar jackson-core-2.9.
+ 9.jar jackson-databind-2.9.9.jar jackson-annotations-2.9.9.jar lwjgl-gl
+ fw.jar lwjgl-glfw-javadoc.jar lwjgl-glfw-sources.jar lwjgl-glfw-natives
+ -linux.jar lwjgl-glfw-natives-macos.jar lwjgl-glfw-natives-freebsd.jar 
+ lwjgl-glfw-natives-windows.jar lwjgl-glfw-natives-linux-arm32.jar lwjgl
+ -glfw-natives-linux-arm64.jar lwjgl-glfw-natives-macos-arm64.jar lwjgl-
+ glfw-natives-windows-x86.jar lwjgl-glfw-natives-linux-ppc64le.jar lwjgl
+ -glfw-natives-linux-riscv64.jar lwjgl-glfw-natives-windows-arm64.jar lw
+ jgl-opengl.jar lwjgl-opengl-javadoc.jar lwjgl-opengl-sources.jar lwjgl-
+ opengl-natives-linux.jar lwjgl-opengl-natives-macos.jar lwjgl-opengl-na
+ tives-freebsd.jar lwjgl-opengl-natives-windows.jar lwjgl-opengl-natives
+ -linux-arm32.jar lwjgl-opengl-natives-linux-arm64.jar lwjgl-opengl-nati
+ ves-macos-arm64.jar lwjgl-opengl-natives-windows-x86.jar lwjgl-opengl-n
+ atives-linux-ppc64le.jar lwjgl-opengl-natives-linux-riscv64.jar lwjgl-o
+ pengl-natives-windows-arm64.jar joml-1.10.9-20240802.170419-1.jar lwjgl
+ .jar lwjgl-sources.jar lwjgl-natives-linux.jar lwjgl-natives-macos.jar 
+ lwjgl-natives-freebsd.jar lwjgl-natives-windows.jar lwjgl-natives-linux
+ -arm32.jar lwjgl-natives-linux-arm64.jar lwjgl-natives-macos-arm64.jar 
+ lwjgl-natives-windows-x86.jar lwjgl-natives-linux-ppc64le.jar lwjgl-nat
+ ives-linux-riscv64.jar lwjgl-natives-windows-arm64.jar
+

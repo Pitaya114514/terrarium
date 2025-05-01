@@ -27,8 +27,12 @@ public class CharBar extends RenderModule {
         this.text.append(text);
     }
 
-    public void clear() {
+    public void input(char character) {
+        this.text.append(character);
+    }
 
+    public void clear() {
+        text.setLength(0);
     }
 
     @Override

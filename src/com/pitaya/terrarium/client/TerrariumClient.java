@@ -30,7 +30,7 @@ public class TerrariumClient {
         this.properties = new Properties();
         properties.setProperty("game-width", "1024");
         properties.setProperty("game-height", "768");
-        properties.setProperty("smooth-camara", "true");
+        properties.setProperty("smooth-camara", "false");
 
         try (FileOutputStream out = new FileOutputStream("client.properties")) {
             properties.store(out, "Terrarium Client Configs");

@@ -3,7 +3,7 @@ package com.pitaya.terrarium.game.tool;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class Counter {
+public final class Counter {
     private int count;
     private final Timer timer;
     private int value;

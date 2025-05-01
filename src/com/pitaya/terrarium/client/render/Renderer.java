@@ -57,7 +57,7 @@ public final class Renderer {
     }
 
     private void update() {
-        GLFW.glfwSetWindowTitle(window, String.format("Terrarium | fps=%s", getFps()));
+        GLFW.glfwSetWindowTitle(window, String.format("Terrarium | fps=%s | tps=%s", getFps(), Main.getClient().terrarium.getTps()));
         GL33.glClear(GL33.GL_COLOR_BUFFER_BIT);
         camara.setPos(Main.getClient().player.entity().position);
         if (Main.getClient().player.isMovingToLeft) {
@@ -103,11 +103,7 @@ public final class Renderer {
         GLFW.glfwSetKeyCallback(window, (window1, key, scancode, action, mods) -> {
             switch (key) {
                 case GLFW.GLFW_KEY_A -> {
-                    if (Hud.HudItems.CHAT_BAR.getRenderModule().isEnable()) {
-                        ((CharBar) Hud.HudItems.CHAT_BAR.getRenderModule()).input("a");
-                    } else {
-                        Main.getClient().player.isMovingToLeft = action != GLFW.GLFW_RELEASE && !Main.getClient().player.isMovingToRight;
-                    }
+                    Main.getClient().player.isMovingToLeft = action != GLFW.GLFW_RELEASE && !Main.getClient().player.isMovingToRight;
                 }
                 case GLFW.GLFW_KEY_D -> {
                     Main.getClient().player.isMovingToRight = action != GLFW.GLFW_RELEASE && !Main.getClient().player.isMovingToLeft;
@@ -132,6 +128,9 @@ public final class Renderer {
                         charBar.setEnable(!charBar.isEnable());
                     }
                 }
+                case GLFW.GLFW_KEY_H -> {
+                    Main.getClient().player.entity().setHealth(Main.getClient().player.entity().getHealth() + 50);
+                }
             }
         });
         GLFW.glfwSetWindowSizeCallback(window, ((window1, width1, height1) ->  {
@@ -141,6 +140,11 @@ public final class Renderer {
         GLFW.glfwSetCursorPosCallback(window, (window1, xpos, ypos) -> {
             cursorPos.set(xpos, ypos);
             Main.getClient().player.cursorPos.set(camara.getWorldPos(cursorPos));
+        });
+        GLFW.glfwSetCharCallback(window, (window1, codepoint) -> {
+            if (Hud.HudItems.CHAT_BAR.getRenderModule().isEnable()) {
+                ((CharBar) Hud.HudItems.CHAT_BAR.getRenderModule()).input((char) codepoint);
+            }
         });
         GLFW.glfwMakeContextCurrent(window);
         GLFW.glfwSwapInterval(1);

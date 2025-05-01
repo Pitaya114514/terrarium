@@ -38,7 +38,7 @@ public class SlimeKingEntity extends BossEntity implements Actionable {
                 }
             }
             case DEFAULT -> {
-                for (Entity entity : world.syncEntitySet) {
+                for (Entity entity : world.entityList) {
                     if (entity instanceof PlayerEntity) {
                         setTarget(entity.position);
                         break;

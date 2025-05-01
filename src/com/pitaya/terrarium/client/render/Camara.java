@@ -64,9 +64,14 @@ public final class Camara {
 
     public void setPos(Vector2f pos) {
         if (isSmoothCamara) {
-            int quadrant = PosTool.getQuadrant(this.pos, pos);
+            boolean direction = PosTool.getDirection(this.pos, pos);
             float slope = PosTool.getSlope(this.pos, pos);
-            PosTool.movePos(this.pos, quadrant, slope, 3.0f);
+            double distance = PosTool.getDistance(this.pos, pos);
+            if (distance < 3.0f) {
+                PosTool.movePos(this.pos, direction, slope, (float) distance);
+            } else {
+                PosTool.movePos(this.pos, direction, slope, 3.0f);
+            }
         } else {
             this.pos.set(pos);
         }
