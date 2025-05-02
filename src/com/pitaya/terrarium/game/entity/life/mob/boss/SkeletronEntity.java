@@ -25,7 +25,7 @@ public class SkeletronEntity extends BossEntity implements Actionable {
     private Vector2f target;
 
     public SkeletronEntity(Vector2f pos, Vector2f target) {
-        super("Skeletron", new Box(50, 50, 200), new MoveController(true), pos.x, pos.y, 276900, -19, 5);
+        super("Skeletron", new Box(50, 50, 200), new MoveController(true), pos.x, pos.y, 14000, 50, 5);
         this.target = target;
         leftHand = new SkeletronHandEntity(new Vector2f().set(pos), this, false);
         rightHand = new SkeletronHandEntity(new Vector2f().set(pos), this, true);

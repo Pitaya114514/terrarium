@@ -71,4 +71,8 @@ public final class MoveController {
         isFloating = floating;
     }
 
+    public void setFloatable(boolean b) {
+        floatable = b;
+    }
+
 }

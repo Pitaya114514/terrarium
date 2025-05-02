@@ -13,7 +13,7 @@ public class Bullet extends BarrageEntity implements Actionable {
     private boolean direction;
     private Vector2f target;
     public Bullet(Vector2f position, Vector2f targetPos, float speed) {
-        super("Bullet", new Box(3, 3, 424), new MoveController(true), position.x, position.y, 3);
+        super("Bullet", new Box(3, 3, 30), new MoveController(true), position.x, position.y, 3);
         this.speed = speed;
         setTarget(targetPos);
         direction = PosTool.getDirection(position, this.target);
@@ -23,6 +23,10 @@ public class Bullet extends BarrageEntity implements Actionable {
     @Override
     public void action(World world) {
         PosTool.movePos(position, direction, slope, speed);
+        if (time == 100) {
+            world.addEntity(new Explosion(position));
+            world.removeEntity(this);
+        }
     }
 
     @Override

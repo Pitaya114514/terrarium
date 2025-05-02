@@ -27,7 +27,7 @@ public class EyeOfCthulhuEntity extends BossEntity implements Actionable {
     private boolean isEnraged;
     private boolean si;
     public EyeOfCthulhuEntity(Vector2f pos, Vector2f target) {
-        super("Eye of Cthulhu", new Box(100, 100, 30), new MoveController(true), pos.x, pos.y, 98152, 5, 10);
+        super("Eye of Cthulhu", new Box(100, 100, 45), new MoveController(true), pos.x, pos.y, 4641, 12, 10);
         setTarget(target);
         slope = PosTool.getSlope(position, this.target);
         direction = PosTool.getDirection(position, this.target);
@@ -48,7 +48,7 @@ public class EyeOfCthulhuEntity extends BossEntity implements Actionable {
 
     @Override
     public void action(World world) {
-        if (!isEnraged && getHealth() / defaultHealth <= 0.4) {
+        if (!isEnraged && getHealth() / defaultHealth <= 0.64) {
             isEnraged = true;
             actionState = Action.INVERTING;
             cd = 0;
@@ -72,6 +72,8 @@ public class EyeOfCthulhuEntity extends BossEntity implements Actionable {
                 invertCd++;
                 if (invertCd >= 240) {
                     invertCd = 0;
+                    box.damage = 54;
+                    setDefense(-3);
                     actionState = Action.SECOND_CHASING;
                 }
             }

@@ -1,11 +1,15 @@
 package com.pitaya.terrarium.game.item;
 
+import com.pitaya.terrarium.game.entity.life.PlayerEntity;
+
 public final class Backpack {
+    private PlayerEntity owner;
     private final int capacity;
     private final Item[] inventory;
     private int index;
 
-    public Backpack(int capacity) {
+    public Backpack(PlayerEntity owner, int capacity) {
+        this.owner = owner;
         this.capacity = capacity;
         inventory = new Item[capacity];
     }
@@ -14,6 +18,7 @@ public final class Backpack {
         if (index >= capacity) {
             return;
         }
+        item.setOwner(owner);
         inventory[index] = item;
         index++;
     }

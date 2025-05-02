@@ -25,7 +25,7 @@ public abstract class LivingEntity extends Entity {
     }
 
     public void damage(Entity source, double value) {
-        if (source == this || value <= 0) {
+        if (source == this || value <= 0 || healthManager.isInvincible) {
             return;
         }
         double h = value - this.defense;
@@ -49,5 +49,13 @@ public abstract class LivingEntity extends Entity {
         } else {
             this.health = 0;
         }
+    }
+
+    public double getDefense() {
+        return defense;
+    }
+
+    public void setDefense(double defense) {
+        this.defense = defense;
     }
 }

@@ -1,8 +1,8 @@
 package com.pitaya.terrarium.client.render;
 
 import com.pitaya.terrarium.Main;
+import com.pitaya.terrarium.client.TerrariumClient;
 import com.pitaya.terrarium.game.entity.Entity;
-import com.pitaya.terrarium.game.entity.barrage.Bullet;
 import com.pitaya.terrarium.game.entity.life.LivingEntity;
 import com.pitaya.terrarium.game.entity.life.mob.boss.BossEntity;
 import com.pitaya.terrarium.game.tool.Counter;
@@ -15,12 +15,13 @@ import org.lwjgl.opengl.GL33;
 import org.lwjgl.system.MemoryUtil;
 
 import java.util.ConcurrentModificationException;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class Renderer {
     public final static Logger LOGGER = LogManager.getLogger(Renderer.class);
     static {
         if (!GLFW.glfwInit()) {
-            throw new IllegalStateException("Unable to initialize GLFW");
+            LOGGER.warn("Unable to initialize GLFW");
         } else {
             GLFW.glfwDefaultWindowHints();
             GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
@@ -28,6 +29,7 @@ public final class Renderer {
         }
     }
 
+    private boolean isInDebugMode;
     private Counter fpsCounter = new Counter();
     private Camara camara;
     private Hud hud;
@@ -62,7 +64,18 @@ public final class Renderer {
     }
 
     private void update() {
-        GLFW.glfwSetWindowTitle(window, String.format("Terrarium | fps=%s | tps=%s", getFps(), Main.getClient().terrarium.getTps()));
+        if (isInDebugMode) {
+            GLFW.glfwSetWindowTitle(window, String.format("Terrarium | fps=%s | tps=%s", getFps(), Main.getClient().terrarium.getTps()));
+        }
+
+        double[] xpos = new double[1];
+        double[] ypos = new double[1];
+        GLFW.glfwGetCursorPos(window, xpos, ypos);
+        cursorPos.set(xpos[0], ypos[0]);
+        Vector2f cursorPos2 = camara.getWorldPos(cursorPos);
+        Main.getClient().player.cursorPos.set(cursorPos2);
+        Main.getClient().player.entity().targetPos.set(cursorPos2);
+
         GL33.glClear(GL33.GL_COLOR_BUFFER_BIT);
         camara.setPos(Main.getClient().player.entity().position);
         if (Main.getClient().player.isMovingToLeft) {
@@ -76,28 +89,28 @@ public final class Renderer {
             hud.render(Hud.HudItems.CHAT_BAR.getRenderModule(), windowSize);
             hud.render(Hud.HudItems.PLAYER_HEALTH_BAR.getRenderModule(), windowSize);
             hud.render(Hud.HudItems.BOSS_HEALTH_BAR.getRenderModule(), windowSize);
-            hud.render(camara.getRenderPos(Main.getClient().player.entity().position), cursorPos, null, null, GL33.GL_LINES, 0.3f, 1.0f, 0.0f);
         }
 
-        Vector2f pos1 = new Vector2f(-999, 0);
-        Vector2f pos2 = new Vector2f(999, 0);
+        Vector2f pos1 = new Vector2f(Integer.MIN_VALUE, 0);
+        Vector2f pos2 = new Vector2f(Integer.MAX_VALUE, 0);
         camara.render(pos1, pos2, null, null, GL33.GL_LINES, 0.6f, 1.0f, 0.8f);
-        try {
-            for (Entity entity : Main.getClient().terrarium.getEntitySet()) {
-                camara.render(entity.box.getTopLeft(), entity.box.getBottomLeft(), entity.box.getBottomRight(), entity.box.getTopRight(), GL33.GL_QUADS, 0.6f, 0.7f, 0.8f);
-                if (entity instanceof BossEntity) {
-                    ((BossHealthBar) Hud.HudItems.BOSS_HEALTH_BAR.getRenderModule()).setTargetEntity((LivingEntity) entity);
-                }
+
+        for (int i = 0; i < Main.getClient().terrarium.getEntityList().size(); i++) {
+            Entity entity = Main.getClient().terrarium.getEntityList().get(i);
+            camara.render(entity.box.getTopLeft(), entity.box.getBottomLeft(), entity.box.getBottomRight(), entity.box.getTopRight(), GL33.GL_QUADS, 0.6f, 0.7f, 0.8f);
+            if (entity instanceof BossEntity) {
+                ((BossHealthBar) Hud.HudItems.BOSS_HEALTH_BAR.getRenderModule()).setTargetEntity((LivingEntity) entity);
             }
-        } catch (ConcurrentModificationException e) {
-            LOGGER.error(e);
         }
     }
 
     private void init() {
+        isInDebugMode = Boolean.parseBoolean(Main.getClient().properties.getProperty("debug-mode"));
         int width = Integer.parseInt(Main.getClient().properties.getProperty("game-width"));
         int height = Integer.parseInt(Main.getClient().properties.getProperty("game-height"));
-        window = GLFW.glfwCreateWindow(width, height, "Terrarium", MemoryUtil.NULL, MemoryUtil.NULL);
+        String title = isInDebugMode ? "Terrarium" :
+                TerrariumClient.TITLE_LIST.get(ThreadLocalRandom.current().nextInt(TerrariumClient.TITLE_LIST.size()));
+        window = GLFW.glfwCreateWindow(width, height, title, MemoryUtil.NULL, MemoryUtil.NULL);
         if (window == MemoryUtil.NULL) {
             throw new IllegalStateException("Unable to create game window");
         }
@@ -201,8 +214,6 @@ public final class Renderer {
             reload(width1, height1);
         }));
         GLFW.glfwSetCursorPosCallback(window, (window1, xpos, ypos) -> {
-            cursorPos.set(xpos, ypos);
-            Main.getClient().player.cursorPos.set(camara.getWorldPos(cursorPos));
         });
         GLFW.glfwSetCharCallback(window, (window1, codepoint) -> {
             if (Hud.HudItems.CHAT_BAR.getRenderModule().isEnable()) {

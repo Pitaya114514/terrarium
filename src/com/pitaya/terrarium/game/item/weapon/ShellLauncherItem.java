@@ -13,10 +13,6 @@ public class ShellLauncherItem extends Item {
     @Override
     public void use(World world) {
         super.use(world);
-        world.addEntity(new Shell(Main.getClient().player.entity().position, Main.getClient().player.cursorPos, 6));
-        world.addEntity(new Shell(Main.getClient().player.entity().position, Main.getClient().player.cursorPos, 7));
-        world.addEntity(new Shell(Main.getClient().player.entity().position, Main.getClient().player.cursorPos, 8));
-        world.addEntity(new Shell(Main.getClient().player.entity().position, Main.getClient().player.cursorPos, 9));
-        world.addEntity(new Shell(Main.getClient().player.entity().position, Main.getClient().player.cursorPos, 10));
+        world.addEntity(new Shell(owner.position, owner.targetPos, 12.3f));
     }
 }

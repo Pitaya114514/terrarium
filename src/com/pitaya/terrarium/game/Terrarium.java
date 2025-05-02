@@ -59,7 +59,7 @@ public class Terrarium {
         return mainWorld.getTps();
     }
 
-    public List<Entity> getEntitySet() {
+    public List<Entity> getEntityList() {
         return mainWorld.entityList;
     }
 

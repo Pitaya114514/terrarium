@@ -8,29 +8,29 @@ import com.pitaya.terrarium.game.entity.barrage.Explosion;
 import com.pitaya.terrarium.game.entity.barrage.Shell;
 import com.pitaya.terrarium.game.item.Backpack;
 import com.pitaya.terrarium.game.item.other.HeartOfOldManItem;
+import com.pitaya.terrarium.game.item.other.RodOfDiscordItem;
 import com.pitaya.terrarium.game.item.other.SlimeCrownItem;
 import com.pitaya.terrarium.game.item.other.SuspiciousLookingEyeItem;
 import com.pitaya.terrarium.game.item.weapon.MeteorStaffItem;
 import com.pitaya.terrarium.game.item.weapon.ShellLauncherItem;
+import org.joml.Vector2f;
 
 public class PlayerEntity extends LivingEntity {
-    private final Backpack backpack = new Backpack(30);
+    private final Backpack backpack = new Backpack(this, 30);
+    public final Vector2f targetPos = new Vector2f();
 
     public PlayerEntity(String name, float x, float y) {
         super(name, new Box(10, 10, 0), new MoveController(false), x, y, 100, 0, 50);
         backpack.addItem(new ShellLauncherItem());
         HeartOfOldManItem item = new HeartOfOldManItem();
-        item.setOwner(this);
         backpack.addItem(item);
         SlimeCrownItem item1 = new SlimeCrownItem();
-        item1.setOwner(this);
         backpack.addItem(item1);
         SuspiciousLookingEyeItem item2 = new SuspiciousLookingEyeItem();
-        item2.setOwner(this);
         backpack.addItem(item2);
         MeteorStaffItem item3 = new MeteorStaffItem();
-        item3.setOwner(this);
         backpack.addItem(item3);
+        backpack.addItem(new RodOfDiscordItem());
     }
 
     public Backpack getBackpack() {

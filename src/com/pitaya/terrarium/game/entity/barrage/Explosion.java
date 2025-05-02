@@ -3,6 +3,7 @@ package com.pitaya.terrarium.game.entity.barrage;
 import com.pitaya.terrarium.game.entity.Actionable;
 import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.MoveController;
+import com.pitaya.terrarium.game.tool.PosTool;
 import com.pitaya.terrarium.game.world.World;
 import org.joml.Vector2f;
 

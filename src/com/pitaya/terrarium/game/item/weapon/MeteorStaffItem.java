@@ -15,8 +15,8 @@ public class MeteorStaffItem extends Item {
     @Override
     public void use(World world) {
         super.use(world);
-        Vector2f position = Main.getClient().player.cursorPos;
-        for (int i = 0; i < 30; i++) {
+        Vector2f position = owner.targetPos;
+        for (int i = 0; i < 100; i++) {
             Vector2f randomPos = PosTool.getRandomPos(position, 100);
             world.addEntity(new Bullet(position, randomPos, position.distance(randomPos) / 10));
         }
