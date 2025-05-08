@@ -9,12 +9,4 @@ public abstract class MobEntity extends LivingEntity {
     public MobEntity(String name, Box box, MoveController moveController, float x, float y, double defaultHealth, double defense, int invincibilityFrame) {
         super(name, box, moveController, x, y, defaultHealth, defense, invincibilityFrame);
     }
-
-    @Override
-    public void damage(Entity source, double value) {
-        if (source instanceof MobEntity) {
-            return;
-        }
-        super.damage(source, value);
-    }
 }

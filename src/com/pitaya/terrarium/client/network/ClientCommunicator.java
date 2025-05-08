@@ -23,13 +23,13 @@ public class ClientCommunicator {
         communicatorThread = new Thread(() -> {
             try {
                 socket.setSoTimeout(9500);
+                packet.setAddress(server.address());
+                packet.setPort(server.port());
             } catch (SocketException e) {
                 throw new RuntimeException(e);
             }
             while (true) {
                 try {
-                    packet.setAddress(server.address());
-                    packet.setPort(server.port());
                     socket.send(packet);
                     socket.receive(packet);
                     System.out.println(packet);

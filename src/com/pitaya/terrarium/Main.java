@@ -5,7 +5,7 @@ import com.pitaya.terrarium.server.TerrariumServer;
 
 import java.util.Objects;
 
-public class Main {
+public final class Main {
     private static TerrariumClient client;
     private static TerrariumServer server;
 

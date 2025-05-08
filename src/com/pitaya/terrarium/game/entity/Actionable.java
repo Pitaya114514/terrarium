@@ -9,5 +9,11 @@ public interface Actionable {
 
     void action(World world);
 
-    void setTarget(Vector2f pos);
+    default void setTarget(Vector2f pos) {
+
+    }
+
+    default void setEntity(Entity target) {
+
+    }
 }

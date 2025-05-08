@@ -13,7 +13,7 @@ public class Shell extends BarrageEntity implements Actionable {
     private boolean direction;
     private float speed;
     public Shell(Vector2f position, Vector2f targetPos, float speed) {
-        super("shell", new Box(7, 8, 50), new MoveController(false), position.x, position.y, 1);
+        super("shell", new Box(7, 8, 50, false), new MoveController(false), position.x, position.y);
         this.speed = speed;
         setTarget(targetPos);
         slope = PosTool.getSlope(position, target);
@@ -30,7 +30,7 @@ public class Shell extends BarrageEntity implements Actionable {
     public void action(World world) {
         if (target != null) {
             PosTool.movePos(position, direction, slope, speed);
-            if (box.isOnGround() || time > 100 || durability <= 0) {
+            if (box.isOnGround() || time > 100 || penetration > 0) {
                 world.addEntity(new Explosion(new Vector2f().set(position)));
                 world.removeEntity(this);
             }

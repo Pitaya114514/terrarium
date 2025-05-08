@@ -3,6 +3,8 @@ package com.pitaya.terrarium.game;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.item.Item;
 import com.pitaya.terrarium.game.world.World;
+import com.pitaya.terrarium.game.world.WorldEvent;
+import com.pitaya.terrarium.game.world.WorldListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -33,9 +35,11 @@ public class Terrarium {
     }
 
     public void useItem(Item item) {
-        if (item != null) {
-            item.use(mainWorld);
-        }
+        mainWorld.addDisposableTickEventListener(event -> {
+            if (item != null) {
+                item.use(mainWorld);
+            }
+        });
     }
 
     public Entity getEntityInRange(Entity entity, float range) {

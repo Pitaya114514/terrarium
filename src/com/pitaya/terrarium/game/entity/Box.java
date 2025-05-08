@@ -6,12 +6,14 @@ public class Box {
     public final float width;
     public final float height;
     public double damage;
+    public boolean isDangerous;
     public Vector2f center;
 
-    public Box(float width, float height, double damage) {
+    public Box(float width, float height, double damage, boolean isDangerous) {
         this.width = width;
         this.height = height;
         this.damage = damage;
+        this.isDangerous = isDangerous;
     }
 
     public Vector2f getTopLeft() {

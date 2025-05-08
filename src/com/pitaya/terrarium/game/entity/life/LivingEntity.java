@@ -4,6 +4,7 @@ import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.MoveController;
 import com.pitaya.terrarium.game.entity.barrage.BarrageEntity;
+import com.pitaya.terrarium.game.entity.life.mob.MobEntity;
 
 public abstract class LivingEntity extends Entity {
     public final double defaultHealth;
@@ -25,17 +26,24 @@ public abstract class LivingEntity extends Entity {
     }
 
     public void damage(Entity source, double value) {
+        if (this instanceof MobEntity && source.box.isDangerous) {
+            return;
+        }
+        if (!(this instanceof MobEntity) && !source.box.isDangerous) {
+            return;
+        }
         if (source == this || value <= 0 || healthManager.isInvincible) {
             return;
         }
+
         double h = value - this.defense;
         if (h < 1) {
             h = 1;
         }
         if (this.healthManager.invincibilityCD <= 0) {
             this.setHealth(this.health - h);
-            if (source instanceof BarrageEntity) {
-                ((BarrageEntity) source).setDurability(((BarrageEntity) source).getDefaultDurability() - 1);
+            if (source instanceof BarrageEntity barrage) {
+                barrage.penetration++;
             }
             healthManager.setAttacker(source);
             healthManager.invincibilityCD = healthManager.invincibilityFrame;

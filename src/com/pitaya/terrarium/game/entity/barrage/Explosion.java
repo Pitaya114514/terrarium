@@ -9,7 +9,7 @@ import org.joml.Vector2f;
 
 public class Explosion extends BarrageEntity implements Actionable {
     public Explosion(Vector2f position) {
-        super("Explosion", new Box(100, 100, 300), new MoveController(true), position.x, position.y, 300);
+        super("Explosion", new Box(100, 100, 300, false), new MoveController(true), position.x, position.y);
     }
 
     @Override
@@ -17,10 +17,5 @@ public class Explosion extends BarrageEntity implements Actionable {
         if (time > 3) {
             world.removeEntity(this);
         }
-    }
-
-    @Override
-    public void setTarget(Vector2f pos) {
-
     }
 }

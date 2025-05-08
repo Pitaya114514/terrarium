@@ -11,12 +11,12 @@ import org.joml.Vector2f;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class SlimeKingEntity extends BossEntity implements Actionable {
-    public enum Action {
+    enum Action {
         DEFAULT, CHASING, TELEPORTING
     }
 
     public SlimeKingEntity(Vector2f pos, Vector2f target) {
-        super("Slime King", new Box(200, 155, 96), new MoveController(false), pos.x, pos.y, 3570, 10, 5);
+        super("Slime King", new Box(200, 155, 96, true), new MoveController(false), pos.x, pos.y, 3570, 10, 5);
         setTarget(target);
     }
 

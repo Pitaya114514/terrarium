@@ -95,6 +95,8 @@ public class TerrariumClient {
         properties.setProperty("game-height", "900");
         properties.setProperty("smooth-camara", "false");
         properties.setProperty("debug-mode", "false");
+        properties.setProperty("debug-mode", "false");
+        properties.setProperty("auto-aim", "true");
 
         try (FileOutputStream out = new FileOutputStream("client.properties")) {
             properties.store(out, "Terrarium Client Configs");

@@ -7,8 +7,10 @@ public abstract class Entity {
     public final String name;
     public final Box box;
     public final MoveController moveController;
-    public int time;
     public final Vector2f position = new Vector2f();
+    public int time;
+    private boolean isAlive;
+    private Entity attackTarget;
 
     public Entity(String name, Box box, MoveController moveController, float x, float y) {
         this.name = name;
@@ -27,13 +29,30 @@ public abstract class Entity {
         return position.y;
     }
 
-    public void attack(LivingEntity attacked, double value) {
-        if (this == attacked) {
+    public void attack(LivingEntity target, double value) {
+        if (this == target) {
             return;
         }
         if (value < 0) {
             value = 0;
         }
-        attacked.damage(this, value);
+        setAttackTarget(target);
+        target.damage(this, value);
+    }
+
+    public boolean isAlive() {
+        return isAlive;
+    }
+
+    public void setAlive(boolean alive) {
+        isAlive = alive;
+    }
+
+    public Entity getAttackTarget() {
+        return attackTarget;
+    }
+
+    public void setAttackTarget(Entity attackTarget) {
+        this.attackTarget = attackTarget;
     }
 }

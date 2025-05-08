@@ -1,19 +1,20 @@
 package com.pitaya.terrarium.game.world;
 
-import com.pitaya.terrarium.Main;
 import com.pitaya.terrarium.game.entity.Actionable;
 import com.pitaya.terrarium.game.entity.Entity;
+import com.pitaya.terrarium.game.entity.barrage.BarrageEntity;
 import com.pitaya.terrarium.game.entity.life.LivingEntity;
 import com.pitaya.terrarium.game.entity.life.PlayerEntity;
 import com.pitaya.terrarium.game.entity.life.mob.boss.BossEntity;
-import com.pitaya.terrarium.game.entity.life.mob.boss.SkeletronEntity;
 import com.pitaya.terrarium.game.tool.Counter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joml.Vector2f;
 
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class World implements Runnable {
     public static final Logger LOGGER = LogManager.getLogger(World.class);
@@ -28,6 +29,7 @@ public class World implements Runnable {
     private Counter tpsCounter;
 
     private final List<WorldListener> tickEventListeners = new ArrayList<>();
+    private final List<WorldListener> disposableTickEventListeners = new ArrayList<>();
 
     public volatile boolean paused = false;
     public final Object pauseLock = new Object();
@@ -41,11 +43,13 @@ public class World implements Runnable {
                 LOGGER.info("{} -> {}", this, message);
             }
         });
-        addTickEventListeners(event -> {
+        addTickEventListener(event -> {
             for (int i = 0; i < entityList.size(); i++) {
                 Entity entity = entityList.get(i);
                 for (Vector2f centerPos : centerPosList) {
-                    if (centerPos.distance(entity.position) > 1000) {
+                    if (entity instanceof LivingEntity && centerPos.distance(entity.position) > 3100) {
+                        removeEntity(entity);
+                    } else if (entity instanceof BarrageEntity && centerPos.distance(entity.position) > 1550) {
                         removeEntity(entity);
                     }
                 }
@@ -76,18 +80,18 @@ public class World implements Runnable {
                 if (entity instanceof Actionable) {
                     ((Actionable) entity).action(this);
                 }
-                if (entity.box.damage > 0) {
-                    for (Entity targetEntity : entityList) {
-                        if (entity != targetEntity && targetEntity instanceof LivingEntity) {
-                            boolean xOverlap = (targetEntity.box.getTopRight().x >= entity.box.getBottomLeft().x) && (targetEntity.box.getBottomLeft().x <= entity.box.getTopRight().x);
-                            boolean yOverlap = (targetEntity.box.getTopRight().y >= entity.box.getBottomLeft().y) && (targetEntity.box.getBottomLeft().y <= entity.box.getTopRight().y);
-                            ((LivingEntity) targetEntity).healthManager.isBeingHitting = xOverlap && yOverlap;
-                            if (((LivingEntity) targetEntity).healthManager.isBeingHitting) {
-                                entity.attack((LivingEntity) targetEntity, entity.box.damage);
-                            }
-                        }
-                    }
-                }
+//                if (entity.box.damage > 0) {
+//                    for (Entity targetEntity : entityList) {
+//                        if (entity != targetEntity && targetEntity instanceof LivingEntity) {
+//                            boolean xOverlap = (targetEntity.box.getTopRight().x >= entity.box.getBottomLeft().x) && (targetEntity.box.getBottomLeft().x <= entity.box.getTopRight().x);
+//                            boolean yOverlap = (targetEntity.box.getTopRight().y >= entity.box.getBottomLeft().y) && (targetEntity.box.getBottomLeft().y <= entity.box.getTopRight().y);
+//                            ((LivingEntity) targetEntity).healthManager.isBeingHitting = xOverlap && yOverlap;
+//                            if (((LivingEntity) targetEntity).healthManager.isBeingHitting) {
+//                                entity.attack((LivingEntity) targetEntity, entity.box.damage);
+//                            }
+//                        }
+//                    }
+//                }
             }
         });
     }
@@ -124,10 +128,18 @@ public class World implements Runnable {
         for (WorldListener listener : tickEventListeners) {
             listener.trigger(new WorldEvent(this));
         }
+        disposableTickEventListeners.removeIf(new Predicate<>() {
+            @Override
+            public boolean test(WorldListener listener) {
+                listener.trigger(new WorldEvent(this));
+                return true;
+            }
+        });
     }
 
     public void addEntity(Entity entity) {
         syncEntityList.add(entity);
+        entity.setAlive(true);
         if (entity instanceof BossEntity) {
             chatroom.sendMessage(String.format("%s已苏醒！", entity.name));
         } else if (entity instanceof PlayerEntity) {
@@ -137,8 +149,9 @@ public class World implements Runnable {
 
     public void removeEntity(Entity entity) {
         entityList.remove(entity);
-        if (entity instanceof BossEntity) {
-            chatroom.sendMessage(String.format("%s已被打败！\n", entity.name));
+        entity.setAlive(false);
+        if (entity instanceof BossEntity boss && boss.getHealth() <= 0) {
+            chatroom.sendMessage(String.format("%s已被打败！", entity.name));
         }
     }
 
@@ -164,7 +177,11 @@ public class World implements Runnable {
         return tpsCounter.getValue();
     }
 
-    public void addTickEventListeners(WorldListener listener) {
+    public void addTickEventListener(WorldListener listener) {
         tickEventListeners.add(listener);
+    }
+
+    public void addDisposableTickEventListener(WorldListener listener) {
+        disposableTickEventListeners.add(listener);
     }
 }
