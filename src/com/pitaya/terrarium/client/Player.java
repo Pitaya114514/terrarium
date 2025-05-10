@@ -11,7 +11,7 @@ public final class Player {
     public int backpackIndex;
 
     public Player(String name) {
-        this.entity = new PlayerEntity(name, 0, 100);
+        this.entity = new PlayerEntity(name, new Vector2f(0, 100));
     }
 
     public PlayerEntity entity() {

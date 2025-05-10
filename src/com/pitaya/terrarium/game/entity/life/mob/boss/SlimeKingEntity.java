@@ -2,9 +2,7 @@ package com.pitaya.terrarium.game.entity.life.mob.boss;
 
 import com.pitaya.terrarium.game.entity.Actionable;
 import com.pitaya.terrarium.game.entity.Box;
-import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.MoveController;
-import com.pitaya.terrarium.game.entity.life.PlayerEntity;
 import com.pitaya.terrarium.game.world.World;
 import org.joml.Vector2f;
 
@@ -15,8 +13,8 @@ public class SlimeKingEntity extends BossEntity implements Actionable {
         DEFAULT, CHASING, TELEPORTING
     }
 
-    public SlimeKingEntity(Vector2f pos, Vector2f target) {
-        super("Slime King", new Box(200, 155, 96, true), new MoveController(false), pos.x, pos.y, 3570, 10, 5);
+    public SlimeKingEntity(Vector2f position, Vector2f target) {
+        super("Slime King", new Box(200, 155, 96, true), new MoveController(false), position, 3570, 10, 5);
         setTarget(target);
     }
 
@@ -44,17 +42,6 @@ public class SlimeKingEntity extends BossEntity implements Actionable {
             }
             case TELEPORTING -> {
                 moveController.teleportTo(target.x, target.y + 90);
-            }
-            case DEFAULT -> {
-                for (Entity entity : world.entityList) {
-                    if (entity instanceof PlayerEntity) {
-                        setTarget(entity.position);
-                        break;
-                    }
-                }
-                if (target == null) {
-                    world.removeEntity(this);
-                }
             }
         }
     }

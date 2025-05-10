@@ -12,13 +12,13 @@ public abstract class Entity {
     private boolean isAlive;
     private Entity attackTarget;
 
-    public Entity(String name, Box box, MoveController moveController, float x, float y) {
+    public Entity(String name, Box box, MoveController moveController, Vector2f position) {
         this.name = name;
         this.box = box;
         this.moveController = moveController;
-        position.set(x, y);
-        box.center = position;
-        moveController.pos = position;
+        this.position.set(position);
+        this.box.center = this.position;
+        moveController.pos = this.position;
     }
 
     public float getX() {

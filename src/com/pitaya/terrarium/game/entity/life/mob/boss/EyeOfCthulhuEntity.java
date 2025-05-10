@@ -26,8 +26,8 @@ public class EyeOfCthulhuEntity extends BossEntity implements Actionable {
     private boolean direction;
     private boolean isEnraged;
     private boolean si;
-    public EyeOfCthulhuEntity(Vector2f pos, Vector2f target) {
-        super("Eye of Cthulhu", new Box(100, 100, 45, true), new MoveController(true), pos.x, pos.y, 4641, 12, 10);
+    public EyeOfCthulhuEntity(Vector2f position, Vector2f target) {
+        super("Eye of Cthulhu", new Box(100, 100, 45, true), new MoveController(true), position, 4641, 12, 10);
         setTarget(target);
         slope = PosTool.getSlope(position, this.target);
         direction = PosTool.getDirection(position, this.target);

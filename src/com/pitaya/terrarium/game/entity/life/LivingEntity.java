@@ -5,6 +5,7 @@ import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.MoveController;
 import com.pitaya.terrarium.game.entity.barrage.BarrageEntity;
 import com.pitaya.terrarium.game.entity.life.mob.MobEntity;
+import org.joml.Vector2f;
 
 public abstract class LivingEntity extends Entity {
     public final double defaultHealth;
@@ -12,8 +13,8 @@ public abstract class LivingEntity extends Entity {
     private double health;
     private double defense;
 
-    public LivingEntity(String name, Box box, MoveController moveController, float x, float y, double defaultHealth, double defense, int invincibilityFrame) {
-        super(name, box, moveController, x, y);
+    public LivingEntity(String name, Box box, MoveController moveController, Vector2f position, double defaultHealth, double defense, int invincibilityFrame) {
+        super(name, box, moveController, position);
         this.defaultHealth = defaultHealth;
         this.health = defaultHealth;
         this.defense = defense;

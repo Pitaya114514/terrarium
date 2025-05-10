@@ -8,7 +8,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="joml-1.10.9-20240802.170419-1" level="project" />
     <orderEntry type="library" name="lwjgl" level="project" />
     <orderEntry type="library" name="lwjgl-glfw" level="project" />
     <orderEntry type="library" name="lwjgl-opengl" level="project" />
@@ -25,5 +24,6 @@
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="lwjgl-openal" level="project" />
     <orderEntry type="library" name="lwjgl-stb" level="project" />
+    <orderEntry type="library" name="joml-1.10.9-20240802.170419-1" level="project" />
   </component>
 </module>

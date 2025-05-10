@@ -13,7 +13,7 @@ public class ServantOfCthulhuEntity extends MobEntity implements Actionable {
     private final Vector2f target = new Vector2f();
 
     public ServantOfCthulhuEntity(Vector2f position, Vector2f target) {
-        super("Servant of Cthulhu", new Box(10, 5, 34, true), new MoveController(true), position.x, position.y, 15, 0, 5);
+        super("Servant of Cthulhu", new Box(10, 5, 34, true), new MoveController(true), position, 15, 0, 5);
         setTarget(target);
     }
 

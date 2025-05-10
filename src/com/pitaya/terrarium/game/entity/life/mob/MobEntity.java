@@ -4,9 +4,10 @@ import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.MoveController;
 import com.pitaya.terrarium.game.entity.life.LivingEntity;
+import org.joml.Vector2f;
 
 public abstract class MobEntity extends LivingEntity {
-    public MobEntity(String name, Box box, MoveController moveController, float x, float y, double defaultHealth, double defense, int invincibilityFrame) {
-        super(name, box, moveController, x, y, defaultHealth, defense, invincibilityFrame);
+    public MobEntity(String name, Box box, MoveController moveController, Vector2f position, double defaultHealth, double defense, int invincibilityFrame) {
+        super(name, box, moveController, position, defaultHealth, defense, invincibilityFrame);
     }
 }

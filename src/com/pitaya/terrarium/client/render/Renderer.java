@@ -6,7 +6,6 @@ import com.pitaya.terrarium.client.render.resources.ResourceLoadingException;
 import com.pitaya.terrarium.client.render.resources.ResourcePack;
 import com.pitaya.terrarium.client.render.resources.Sound;
 import com.pitaya.terrarium.game.entity.Entity;
-import com.pitaya.terrarium.game.entity.barrage.PhantasmalDeathray;
 import com.pitaya.terrarium.game.entity.life.LivingEntity;
 import com.pitaya.terrarium.game.entity.life.mob.boss.BossEntity;
 import com.pitaya.terrarium.game.tool.Counter;
@@ -14,7 +13,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joml.Vector2f;
 import org.lwjgl.openal.AL;
-import org.lwjgl.openal.AL11;
 import org.lwjgl.openal.ALC;
 import org.lwjgl.opengl.GL;
 
@@ -47,10 +45,15 @@ public final class Renderer {
     private Camara camara;
     private Hud hud;
     private long window;
-    private final Vector2f cursorPos = new Vector2f();
-    private final Vector2f windowSize = new Vector2f();
     private Thread renderThread;
     private LivingEntity targetEntity;
+
+    private final Vector2f cursorPos = new Vector2f();
+    private final Vector2f windowSize = new Vector2f();
+    private final Vector2f tlPos = new Vector2f();
+    private final Vector2f blPos = new Vector2f();
+    private final Vector2f brPos = new Vector2f();
+    private final Vector2f trPos = new Vector2f();
 
     public void load() {
         Runnable renderFunction = () -> {
@@ -156,9 +159,6 @@ public final class Renderer {
                 switch (button) {
                     case GLFW_MOUSE_BUTTON_LEFT -> {
                         Main.getClient().terrarium.useItem(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
-                    }
-                    case GLFW_MOUSE_BUTTON_RIGHT -> {
-                        Main.getClient().terrarium.addEntity(new PhantasmalDeathray(Main.getClient().player.entity().position, Main.getClient().player.entity().targetPos));
                     }
                 }
             }

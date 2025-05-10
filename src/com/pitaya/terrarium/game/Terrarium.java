@@ -3,8 +3,6 @@ package com.pitaya.terrarium.game;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.item.Item;
 import com.pitaya.terrarium.game.world.World;
-import com.pitaya.terrarium.game.world.WorldEvent;
-import com.pitaya.terrarium.game.world.WorldListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -42,15 +40,6 @@ public class Terrarium {
         });
     }
 
-    public Entity getEntityInRange(Entity entity, float range) {
-        for (Entity e : mainWorld.entityList) {
-            if (e.getClass() != entity.getClass() && entity.position.distance(e.position) <= range) {
-                return e;
-            }
-        }
-        return null;
-    }
-
     public void removeEntity(Entity entity) {
         mainWorld.removeEntity(entity);
     }
@@ -64,7 +53,7 @@ public class Terrarium {
     }
 
     public List<Entity> getEntityList() {
-        return mainWorld.entityList;
+        return mainWorld.chunkList.getFirst().getEntityList();
     }
 
     public int getWorldGravity() {
