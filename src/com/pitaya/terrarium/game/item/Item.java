@@ -1,7 +1,7 @@
 package com.pitaya.terrarium.game.item;
 
 import com.pitaya.terrarium.game.entity.life.PlayerEntity;
-import com.pitaya.terrarium.game.world.World;
+import com.pitaya.terrarium.game.World;
 
 public abstract class Item {
     public final String name;

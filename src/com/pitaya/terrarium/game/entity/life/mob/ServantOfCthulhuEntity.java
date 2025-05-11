@@ -5,12 +5,12 @@ import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.MoveController;
 import com.pitaya.terrarium.game.entity.life.mob.boss.EyeOfCthulhuEntity;
-import com.pitaya.terrarium.game.tool.PosTool;
-import com.pitaya.terrarium.game.world.World;
+import com.pitaya.terrarium.game.util.PosUtil;
+import com.pitaya.terrarium.game.World;
 import org.joml.Vector2f;
 
 public class ServantOfCthulhuEntity extends MobEntity implements Actionable {
-    private final Vector2f target = new Vector2f();
+    private Vector2f target = new Vector2f();
 
     public ServantOfCthulhuEntity(Vector2f position, Vector2f target) {
         super("Servant of Cthulhu", new Box(10, 5, 34, true), new MoveController(true), position, 15, 0, 5);
@@ -19,16 +19,16 @@ public class ServantOfCthulhuEntity extends MobEntity implements Actionable {
 
     @Override
     public void setTarget(Vector2f pos) {
-        this.target.set(pos);
+        this.target = pos;
     }
 
     @Override
     public void action(World world) {
         if (target != null) {
-            float slope = PosTool.getSlope(this.position, target);
-            boolean direction = PosTool.getDirection(this.position, target);
+            float slope = PosUtil.getSlope(this.position, target);
+            boolean direction = PosUtil.getDirection(this.position, target);
             float maxSpeed = 2.5f;
-            PosTool.movePos(this.position, direction, slope, maxSpeed);
+            PosUtil.movePos(this.position, direction, slope, maxSpeed);
         } else {
             world.removeEntity(this);
         }

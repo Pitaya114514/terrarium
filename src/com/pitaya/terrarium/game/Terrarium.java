@@ -2,7 +2,6 @@ package com.pitaya.terrarium.game;
 
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.item.Item;
-import com.pitaya.terrarium.game.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -10,7 +9,7 @@ import java.util.List;
 
 public class Terrarium {
     public static final Logger LOGGER = LogManager.getLogger(Terrarium.class);
-    public static final String VERSION = "b1.1";
+    public static final String VERSION = "b1.2.3";
     private World mainWorld;
 
     public Terrarium() {
@@ -53,7 +52,7 @@ public class Terrarium {
     }
 
     public List<Entity> getEntityList() {
-        return mainWorld.chunkList.getFirst().getEntityList();
+        return mainWorld.entityList;
     }
 
     public int getWorldGravity() {

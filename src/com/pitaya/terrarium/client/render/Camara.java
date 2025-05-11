@@ -1,7 +1,7 @@
 package com.pitaya.terrarium.client.render;
 
 import com.pitaya.terrarium.Main;
-import com.pitaya.terrarium.game.tool.PosTool;
+import com.pitaya.terrarium.game.util.PosUtil;
 import org.joml.Vector2f;
 import org.lwjgl.opengl.GL33;
 
@@ -64,13 +64,13 @@ public final class Camara {
 
     public void setPos(Vector2f pos) {
         if (isSmoothCamara) {
-            boolean direction = PosTool.getDirection(this.pos, pos);
-            float slope = PosTool.getSlope(this.pos, pos);
+            boolean direction = PosUtil.getDirection(this.pos, pos);
+            float slope = PosUtil.getSlope(this.pos, pos);
             double distance = this.pos.distance(pos);
             if (distance < 3.0f) {
-                PosTool.movePos(this.pos, direction, slope, (float) distance);
+                PosUtil.movePos(this.pos, direction, slope, (float) distance);
             } else {
-                PosTool.movePos(this.pos, direction, slope, 3.0f);
+                PosUtil.movePos(this.pos, direction, slope, 3.0f);
             }
         } else {
             this.pos.set(pos);

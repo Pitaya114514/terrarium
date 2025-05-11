@@ -1,11 +1,11 @@
-package com.pitaya.terrarium.game.tool;
+package com.pitaya.terrarium.game.util;
 
 import org.joml.Vector2f;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public final class PosTool {
-    private PosTool() {
+public final class PosUtil {
+    private PosUtil() {
     }
 
     public static float getSlope(Vector2f yourPos, Vector2f destination) {

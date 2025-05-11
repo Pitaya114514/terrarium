@@ -6,9 +6,8 @@ public final class HealthManager {
     private Entity attacker;
     public int invincibilityCD;
     public int invincibilityFrame;
-    public boolean isBeingHitting;
     public boolean isInvincible;
-    public int durability;
+    public boolean isWounded;
 
     public void setAttacker(Entity attacker) {
         if (attacker != null) {

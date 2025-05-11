@@ -5,8 +5,8 @@ import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.MoveController;
 import com.pitaya.terrarium.game.entity.life.mob.ServantOfCthulhuEntity;
-import com.pitaya.terrarium.game.tool.PosTool;
-import com.pitaya.terrarium.game.world.World;
+import com.pitaya.terrarium.game.util.PosUtil;
+import com.pitaya.terrarium.game.World;
 import org.joml.Vector2f;
 
 public class EyeOfCthulhuEntity extends BossEntity implements Actionable {
@@ -27,10 +27,10 @@ public class EyeOfCthulhuEntity extends BossEntity implements Actionable {
     private boolean isEnraged;
     private boolean si;
     public EyeOfCthulhuEntity(Vector2f position, Vector2f target) {
-        super("Eye of Cthulhu", new Box(100, 100, 45, true), new MoveController(true), position, 4641, 12, 10);
+        super("Eye of Cthulhu", new Box(100, 100, 45, true), new MoveController(true), position, 4641, 12, 5);
         setTarget(target);
-        slope = PosTool.getSlope(position, this.target);
-        direction = PosTool.getDirection(position, this.target);
+        slope = PosUtil.getSlope(position, this.target);
+        direction = PosUtil.getDirection(position, this.target);
     }
 
     @Override
@@ -97,21 +97,21 @@ public class EyeOfCthulhuEntity extends BossEntity implements Actionable {
                     servantCd = 0;
                     world.addEntity(new ServantOfCthulhuEntity(this.position, target));
                 }
-                slope = PosTool.getSlope(this.position, target);
-                direction = PosTool.getDirection(this.position, target);
+                slope = PosUtil.getSlope(this.position, target);
+                direction = PosUtil.getDirection(this.position, target);
                 maxSpeed = 1;
-                PosTool.movePos(this.position, direction, slope, maxSpeed);
+                PosUtil.movePos(this.position, direction, slope, maxSpeed);
             }
             case FIRST_CRASHING -> {
                 maxSpeed = 3;
                 crashCd++;
                 if (crashCd == 1) {
                     crashPos = new Vector2f().set(target);
-                    cSlope = PosTool.getSlope(this.position, crashPos);
-                    cDirection = PosTool.getDirection(this.position, crashPos);
+                    cSlope = PosUtil.getSlope(this.position, crashPos);
+                    cDirection = PosUtil.getDirection(this.position, crashPos);
                 }
                 if (crashCd > 1) {
-                    PosTool.movePos(this.position, cDirection, cSlope, maxSpeed);
+                    PosUtil.movePos(this.position, cDirection, cSlope, maxSpeed);
                 }
                 if (crashCd > 100) {
                     crashCd = 0;
@@ -129,21 +129,21 @@ public class EyeOfCthulhuEntity extends BossEntity implements Actionable {
                 }
             }
             case SECOND_CHASING -> {
-                slope = PosTool.getSlope(this.position, target);
-                direction = PosTool.getDirection(this.position, target);
+                slope = PosUtil.getSlope(this.position, target);
+                direction = PosUtil.getDirection(this.position, target);
                 maxSpeed = 3.5f;
-                PosTool.movePos(this.position, direction, slope, maxSpeed);
+                PosUtil.movePos(this.position, direction, slope, maxSpeed);
             }
             case SECOND_CRASHING -> {
                 maxSpeed = 10;
                 crashCd++;
                 if (crashCd == 1) {
                     crashPos = new Vector2f().set(target);
-                    cSlope = PosTool.getSlope(this.position, crashPos);
-                    cDirection = PosTool.getDirection(this.position, crashPos);
+                    cSlope = PosUtil.getSlope(this.position, crashPos);
+                    cDirection = PosUtil.getDirection(this.position, crashPos);
                 }
                 if (crashCd > 1) {
-                    PosTool.movePos(this.position, cDirection, cSlope, maxSpeed);
+                    PosUtil.movePos(this.position, cDirection, cSlope, maxSpeed);
                 }
                 if (crashCd > 10) {
                     crashCd = 0;

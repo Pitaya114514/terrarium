@@ -7,8 +7,10 @@ import com.pitaya.terrarium.client.render.resources.ResourcePack;
 import com.pitaya.terrarium.client.render.resources.Sound;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.life.LivingEntity;
+import com.pitaya.terrarium.game.entity.life.PlayerEntity;
+import com.pitaya.terrarium.game.entity.life.PlayerMoveController;
 import com.pitaya.terrarium.game.entity.life.mob.boss.BossEntity;
-import com.pitaya.terrarium.game.tool.Counter;
+import com.pitaya.terrarium.game.util.Counter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joml.Vector2f;
@@ -21,8 +23,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.openal.AL10.alSourcePlay;
 import static org.lwjgl.openal.ALC10.*;
-import static org.lwjgl.openal.ALC10.alcCreateContext;
-import static org.lwjgl.openal.ALC10.alcMakeContextCurrent;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
@@ -48,17 +48,20 @@ public final class Renderer {
     private Thread renderThread;
     private LivingEntity targetEntity;
 
+    private double lastHealth;
+
     private final Vector2f cursorPos = new Vector2f();
     private final Vector2f windowSize = new Vector2f();
     private final Vector2f tlPos = new Vector2f();
     private final Vector2f blPos = new Vector2f();
     private final Vector2f brPos = new Vector2f();
     private final Vector2f trPos = new Vector2f();
+    private final Vector2f centerTrianglesPos = new Vector2f();
 
     public void load() {
         Runnable renderFunction = () -> {
             init();
-            playSound(resourcePack.soundPack.hit_1);
+            playSound(resourcePack.soundPack.roar_1);
             fpsCounter = new Counter();
             fpsCounter.schedule();
             while (!glfwWindowShouldClose(window)) {
@@ -85,6 +88,7 @@ public final class Renderer {
         if (isInDebugMode) {
             glfwSetWindowTitle(window, String.format("Terrarium | fps=%s | tps=%s", getFps(), Main.getClient().terrarium.getTps()));
         }
+
         double[] xpos = new double[1];
         double[] ypos = new double[1];
         glfwGetCursorPos(window, xpos, ypos);
@@ -96,7 +100,9 @@ public final class Renderer {
         } else {
             Main.getClient().player.entity().targetPos.set(cursorPos2);
         }
+
         glClear(GL_COLOR_BUFFER_BIT);
+
         camara.setPos(Main.getClient().player.entity().position);
         if (Main.getClient().player.isMovingToLeft) {
             Main.getClient().player.entity().moveController.moveHorizontallyTo(false, 3);
@@ -113,24 +119,44 @@ public final class Renderer {
 
         Vector2f pos1 = new Vector2f(Integer.MIN_VALUE, 0);
         Vector2f pos2 = new Vector2f(Integer.MAX_VALUE, 0);
+
         camara.render(pos1, pos2, null, null, GL_LINES, 0.6f, 1.0f, 0.8f);
 
         for (int i = 0; i < Main.getClient().terrarium.getEntityList().size(); i++) {
             Entity entity = Main.getClient().terrarium.getEntityList().get(i);
+
+            if (entity instanceof LivingEntity livingEntity && livingEntity.healthManager.isWounded) {
+                playSound(resourcePack.soundPack.hit_1);
+                livingEntity.healthManager.isWounded = false;
+            }
+
             if (shouldAutoAim && entity != Main.getClient().player.entity() && entity instanceof LivingEntity livingEntity) {
                 if (!livingEntity.healthManager.isInvincible && livingEntity.isAlive()) {
                     targetEntity = livingEntity;
                 }
             }
+
             if (entity instanceof BossEntity) {
                 ((BossHealthBar) Hud.HudItems.BOSS_HEALTH_BAR.getRenderModule()).setTargetEntity((LivingEntity) entity);
             }
+
+            float[] rgb = new float[3];
             if (entity instanceof LivingEntity livingEntity && livingEntity.healthManager.isInvincible) {
-                camara.render(entity.box.getTopLeft(), entity.box.getBottomLeft(), entity.box.getBottomRight(), entity.box.getTopRight(), GL_QUADS, 0.4f, 0.5f, 0.6f);
+                rgb[0] = 0.4f;
+                rgb[1] = 0.5f;
+                rgb[2] = 0.6f;
             } else {
-                camara.render(entity.box.getTopLeft(), entity.box.getBottomLeft(), entity.box.getBottomRight(), entity.box.getTopRight(), GL_QUADS, 0.6f, 0.7f, 0.8f);
+                rgb[0] = 0.6f;
+                rgb[1] = 0.7f;
+                rgb[2] = 0.8f;
             }
+
+            camara.render(entity.box.getTopLeft(tlPos), entity.box.getBottomLeft(blPos), null, null, GL_LINES, rgb[0], rgb[1], rgb[2]);
+            camara.render(entity.box.getBottomLeft(blPos), entity.box.getBottomRight(brPos), null, null, GL_LINES, rgb[0], rgb[1], rgb[2]);
+            camara.render(entity.box.getBottomRight(brPos), entity.box.getTopRight(trPos), null, null, GL_LINES, rgb[0], rgb[1], rgb[2]);
+            camara.render(trPos, tlPos, null, null, GL_LINES, rgb[0], rgb[1], rgb[2]);
         }
+
     }
 
     private void init() {
@@ -157,20 +183,26 @@ public final class Renderer {
         glfwSetMouseButtonCallback(window, (window1, button, action, mods) -> {
             if (action != GLFW_RELEASE) {
                 switch (button) {
-                    case GLFW_MOUSE_BUTTON_LEFT -> {
-                        Main.getClient().terrarium.useItem(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
-                    }
+                    case GLFW_MOUSE_BUTTON_LEFT -> Main.getClient().terrarium.useItem(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
                 }
             }
         });
         glfwSetKeyCallback(window, (window1, key, scancode, action, mods) -> {
             switch (key) {
-                case GLFW_KEY_A -> {
-                    Main.getClient().player.isMovingToLeft = action != GLFW_RELEASE && !Main.getClient().player.isMovingToRight;
+                case GLFW_KEY_A -> Main.getClient().player.isMovingToLeft = action != GLFW_RELEASE && !Main.getClient().player.isMovingToRight;
+
+                case GLFW_KEY_D -> Main.getClient().player.isMovingToRight = action != GLFW_RELEASE && !Main.getClient().player.isMovingToLeft;
+
+                case GLFW_KEY_W -> {
+                    if (Main.getClient().player.entity().moveController instanceof PlayerMoveController pmc) {
+                        pmc.isPressingW = action != GLFW_RELEASE && !pmc.isPressingS;
+                    }
                 }
 
-                case GLFW_KEY_D -> {
-                    Main.getClient().player.isMovingToRight = action != GLFW_RELEASE && !Main.getClient().player.isMovingToLeft;
+                case GLFW_KEY_S -> {
+                    if (Main.getClient().player.entity().moveController instanceof PlayerMoveController pmc) {
+                        pmc.isPressingS = action != GLFW_RELEASE && !pmc.isPressingW;
+                    }
                 }
 
                 case GLFW_KEY_SPACE -> {
@@ -196,55 +228,49 @@ public final class Renderer {
                     }
                 }
 
-                case GLFW_KEY_H -> {
-                    Main.getClient().player.entity().setHealth(Main.getClient().player.entity().getHealth() + 50);
-                }
+                case GLFW_KEY_H -> Main.getClient().player.entity().setHealth(Main.getClient().player.entity().getHealth() + 50);
             }
             if (action != GLFW_RELEASE) {
                 switch (key) {
                     case GLFW_KEY_1 -> {
                         Main.getClient().player.backpackIndex = 0;
-                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
                     }
 
                     case GLFW_KEY_2 -> {
                         Main.getClient().player.backpackIndex = 1;
-                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
                     }
 
                     case GLFW_KEY_3 -> {
                         Main.getClient().player.backpackIndex = 2;
-                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
                     }
 
                     case GLFW_KEY_4 -> {
                         Main.getClient().player.backpackIndex = 3;
-                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
                     }
 
                     case GLFW_KEY_5 -> {
                         Main.getClient().player.backpackIndex = 4;
-                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
                     }
 
                     case GLFW_KEY_6 -> {
                         Main.getClient().player.backpackIndex = 5;
-                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
                     }
 
                     case GLFW_KEY_7 -> {
                         Main.getClient().player.backpackIndex = 6;
-                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
                     }
 
                     case GLFW_KEY_8 -> {
                         Main.getClient().player.backpackIndex = 7;
-                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
                     }
 
                     case GLFW_KEY_9 -> {
                         Main.getClient().player.backpackIndex = 8;
-                        LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
+                    }
+                    case GLFW_KEY_0 -> {
+                        if (Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex) != null) {
+                            LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex).name);
+                        }
                     }
                 }
             }
@@ -278,7 +304,7 @@ public final class Renderer {
 
     private void initAl() {
         String defaultDeviceName = alcGetString(0, ALC_DEFAULT_DEVICE_SPECIFIER);
-        long device = 0;
+        long device;
         if (defaultDeviceName != null) {
             device = alcOpenDevice(defaultDeviceName);
         } else {

@@ -29,6 +29,7 @@ public class OptionWindow extends JDialog {
             for (Map.Entry<String, JTextField> entry : tempProperties.entrySet()) {
                 Main.getClient().properties.setProperty(entry.getKey(), entry.getValue().getText());
             }
+            Main.getClient().outputProperties("client.properties");
         });
         JButton button2 = new JButton("Cancel");
         panel.add(button1);

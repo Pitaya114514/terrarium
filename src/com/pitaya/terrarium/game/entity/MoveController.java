@@ -1,14 +1,16 @@
 package com.pitaya.terrarium.game.entity;
 
 import com.pitaya.terrarium.Main;
-import com.pitaya.terrarium.game.tool.PosTool;
+import com.pitaya.terrarium.game.util.PosUtil;
 import org.joml.Vector2f;
 
-public final class MoveController {
-    public Vector2f pos;
+public class MoveController {
+    Vector2f pos;
     private boolean floatable;
     private int floatTime;
     private boolean isFloating;
+    private int gravity;
+
 
     public MoveController(boolean floatable) {
         this.floatable = floatable;
@@ -23,7 +25,7 @@ public final class MoveController {
     }
 
     public void moveTo(Vector2f targetPos, float speed) {
-        PosTool.movePos(pos, PosTool.getDirection(pos, targetPos), PosTool.getSlope(pos, targetPos), speed);
+        PosUtil.movePos(pos, PosUtil.getDirection(pos, targetPos), PosUtil.getSlope(pos, targetPos), speed);
     }
 
     public void moveHorizontallyTo(boolean isRight, float speed) {
@@ -75,4 +77,11 @@ public final class MoveController {
         floatable = b;
     }
 
+    public int getGravity() {
+        return gravity;
+    }
+
+    public void setGravity(int gravity) {
+        this.gravity = gravity;
+    }
 }

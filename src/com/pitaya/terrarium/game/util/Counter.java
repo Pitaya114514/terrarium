@@ -1,4 +1,4 @@
-package com.pitaya.terrarium.game.tool;
+package com.pitaya.terrarium.game.util;
 
 import java.util.Timer;
 import java.util.TimerTask;

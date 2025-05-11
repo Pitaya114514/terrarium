@@ -1,5 +1,6 @@
 package com.pitaya.terrarium.client;
 
+import com.pitaya.terrarium.Main;
 import com.pitaya.terrarium.client.network.ClientCommunicator;
 import com.pitaya.terrarium.client.network.Server;
 import com.pitaya.terrarium.client.render.Renderer;
@@ -7,10 +8,8 @@ import com.pitaya.terrarium.client.window.MainWindow;
 import com.pitaya.terrarium.game.Terrarium;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.joml.Vector2f;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -48,7 +47,7 @@ public class TerrariumClient {
     "Terrarium: So then I said 'Something about a PC update....'",
     "Terrarium: May the blocks be with you",
     "Terrarium: Better than life",
-    "Terrarium: Terrarium: Terrarium: Exception in thread \"main\" java.lang.StackOverflowError ",
+    "Terrarium: Terrarium: Terrarium:",
     "Terrarium: Now in 1D",
     "Terrarium: Coming soon to a computer near you",
     "Terrarium: Dividing by zero",
@@ -89,19 +88,23 @@ public class TerrariumClient {
     public final Set<Server> servers;
 
     public TerrariumClient() {
-        LOGGER.info("Loading game properties");
         this.properties = new Properties();
         properties.setProperty("game-width", "1600");
         properties.setProperty("game-height", "900");
         properties.setProperty("smooth-camara", "false");
-        properties.setProperty("debug-mode", "false");
-        properties.setProperty("debug-mode", "false");
+        properties.setProperty("debug-mode", "true");
         properties.setProperty("auto-aim", "true");
 
-        try (FileOutputStream out = new FileOutputStream("client.properties")) {
-            properties.store(out, "Terrarium Client Configs");
+        String name = "client.properties";
+        try (InputStream input = new FileInputStream(name)) {
+            properties.load(input);
         } catch (IOException e) {
-            System.out.println(e);
+            if (e instanceof FileNotFoundException) {
+                LOGGER.warn("No properties! Properties will be generated");
+                outputProperties(name);
+            } else {
+                LOGGER.error("e: ", e);
+            }
         }
 
         this.servers = new HashSet<>();
@@ -110,6 +113,20 @@ public class TerrariumClient {
         this.mainWindow = new MainWindow();
         this.communicator = new ClientCommunicator();
         mainWindow.setVisible(true);
+    }
+
+    public void outputProperties(String name) {
+        try (OutputStream output = new FileOutputStream(name)) {
+            properties.store(output, "Terrarium Client Configs");
+        } catch (IOException ex) {
+            LOGGER.error("ex: ", ex);
+        }
+        try (InputStream input = new FileInputStream(name)) {
+            properties.load(input);
+        } catch (IOException ex) {
+            LOGGER.error("ex: ", ex);
+
+        }
     }
 
     public void runTerrarium() {

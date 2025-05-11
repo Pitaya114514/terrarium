@@ -3,7 +3,7 @@ package com.pitaya.terrarium.game.entity.life.mob.boss;
 import com.pitaya.terrarium.game.entity.Actionable;
 import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.MoveController;
-import com.pitaya.terrarium.game.world.World;
+import com.pitaya.terrarium.game.World;
 import org.joml.Vector2f;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -40,9 +40,7 @@ public class SlimeKingEntity extends BossEntity implements Actionable {
                     this.moveController.moveHorizontallyTo(target.x() - position.x() > 0, 0.5f);
                 }
             }
-            case TELEPORTING -> {
-                moveController.teleportTo(target.x, target.y + 90);
-            }
+            case TELEPORTING -> moveController.teleportTo(target.x, target.y + 90);
         }
     }
 

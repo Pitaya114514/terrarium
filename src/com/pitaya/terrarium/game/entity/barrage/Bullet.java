@@ -3,8 +3,8 @@ package com.pitaya.terrarium.game.entity.barrage;
 import com.pitaya.terrarium.game.entity.Actionable;
 import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.MoveController;
-import com.pitaya.terrarium.game.tool.PosTool;
-import com.pitaya.terrarium.game.world.World;
+import com.pitaya.terrarium.game.util.PosUtil;
+import com.pitaya.terrarium.game.World;
 import org.joml.Vector2f;
 
 public class Bullet extends BarrageEntity implements Actionable {
@@ -13,16 +13,19 @@ public class Bullet extends BarrageEntity implements Actionable {
     private boolean direction;
     private Vector2f target;
     public Bullet(Vector2f position, Vector2f targetPos, float speed) {
-        super("Bullet", new Box(3, 3, 104, false), new MoveController(true), position);
+        super("Bullet", new Box(3, 3, 21, false), new MoveController(true), position);
         this.speed = speed;
         setTarget(targetPos);
-        direction = PosTool.getDirection(position, this.target);
-        slope = PosTool.getSlope(position, this.target);
+        direction = PosUtil.getDirection(position, this.target);
+        slope = PosUtil.getSlope(position, this.target);
     }
 
     @Override
     public void action(World world) {
-        PosTool.movePos(position, direction, slope, speed);
+        if (penetration > 1) {
+            world.removeEntity(this);
+        }
+        PosUtil.movePos(position, direction, slope, speed);
     }
 
     @Override
