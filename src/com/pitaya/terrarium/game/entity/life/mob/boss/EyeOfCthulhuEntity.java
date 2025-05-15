@@ -10,7 +10,7 @@ import com.pitaya.terrarium.game.World;
 import org.joml.Vector2f;
 
 public class EyeOfCthulhuEntity extends BossEntity implements Actionable {
-    enum Action {
+    public enum Action {
         DEFAULT, FIRST_CHASING, FIRST_CRASHING, INVERTING, SECOND_CHASING, SECOND_CRASHING
     }
     public Action actionState = Action.DEFAULT;

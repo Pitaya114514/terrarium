@@ -6,13 +6,11 @@ import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.barrage.BarrageEntity;
 import com.pitaya.terrarium.game.entity.life.HealthManager;
 import com.pitaya.terrarium.game.entity.life.LivingEntity;
-import com.pitaya.terrarium.game.entity.life.PlayerEntity;
+import com.pitaya.terrarium.game.entity.life.player.PlayerDifficulty;
+import com.pitaya.terrarium.game.entity.life.player.PlayerEntity;
 import com.pitaya.terrarium.game.entity.life.mob.boss.BossEntity;
 import com.pitaya.terrarium.game.util.Counter;
-import com.pitaya.terrarium.game.world.Chatroom;
-import com.pitaya.terrarium.game.world.Date;
-import com.pitaya.terrarium.game.world.WorldEvent;
-import com.pitaya.terrarium.game.world.WorldListener;
+import com.pitaya.terrarium.game.world.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joml.Vector2f;
@@ -24,6 +22,8 @@ import java.util.function.Predicate;
 public class World implements Runnable {
     public static final Logger LOGGER = LogManager.getLogger(World.class);
     public static final int TICK = 1000 / 60;
+    public final String name;
+    public WorldDifficulty difficulty;
     public int gravity;
     public Date date = new Date();
     public boolean stopFlag = false;
@@ -38,11 +38,14 @@ public class World implements Runnable {
     public volatile boolean paused = false;
     public final Object pauseLock = new Object();
 
-    public World(int gravity) {
+    public World(String name, int gravity, WorldDifficulty difficulty) {
+        this.difficulty = difficulty == null ? WorldDifficulty.CLASSIC : difficulty;
+        this.name = name;
         this.gravity = gravity;
         this.chatroom = new Chatroom();
         chatroom.addListener(event -> {
-            String message = ((Chatroom) event.getSource()).getMessageList().getLast();
+            List<String> messageList = ((Chatroom) event.getSource()).getMessageList();
+            String message = messageList.get(messageList.size() - 1);
             if (message != null) {
                 LOGGER.info("{} -> {}", date.toString(), message);
             }
@@ -86,9 +89,11 @@ public class World implements Runnable {
             }
             if (entity instanceof LivingEntity livingEntity) {
                 if (livingEntity.getHealth() <= 0) {
-                    if (entity instanceof PlayerEntity) {
-                        ((PlayerEntity) entity).setHealth(((PlayerEntity) entity).defaultHealth);
-                        entity.position.set(0, 100);
+                    if (entity instanceof PlayerEntity player && player.getDifficulty() != PlayerDifficulty.HARDCORE) {
+                        if (player.getDifficulty() == PlayerDifficulty.MEDIUMCORE) {
+                            player.getBackpack().clear();
+                        }
+                        player.respawn();
                     } else {
                         removeEntity(entity);
                     }
@@ -162,6 +167,7 @@ public class World implements Runnable {
         if (entity instanceof BossEntity) {
             chatroom.sendMessage(String.format("%s已苏醒！", entity.name));
         } else if (entity instanceof PlayerEntity) {
+            chatroom.sendMessage(String.format("%s已加入。", entity.name));
             centerPosList.add(entity.position);
         }
     }
@@ -206,5 +212,10 @@ public class World implements Runnable {
 
     public void addDisposableTickEventListener(WorldListener listener) {
         disposableTickEventListeners.add(listener);
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }

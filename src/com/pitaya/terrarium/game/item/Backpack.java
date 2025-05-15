@@ -1,11 +1,11 @@
 package com.pitaya.terrarium.game.item;
 
-import com.pitaya.terrarium.game.entity.life.PlayerEntity;
+import com.pitaya.terrarium.game.entity.life.player.PlayerEntity;
 
 public final class Backpack {
     private PlayerEntity owner;
     private final int capacity;
-    private final Item[] inventory;
+    private Item[] inventory;
     private int index;
 
     public Backpack(PlayerEntity owner, int capacity) {
@@ -35,5 +35,13 @@ public final class Backpack {
             return null;
         }
         return inventory[index];
+    }
+
+    public void clear() {
+        inventory = new Item[capacity];
+    }
+
+    public Item[] getInventory() {
+        return inventory;
     }
 }

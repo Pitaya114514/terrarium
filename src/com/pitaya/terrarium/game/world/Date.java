@@ -45,4 +45,18 @@ public class Date {
     public String toString() {
         return String.format("On Day %s at %s", days, time);
     }
+
+    public boolean isDaytime() {
+        return isDaytime;
+    }
+
+    public void setDays(int days) {
+        if (days >= 0) {
+            this.days = days;
+        }
+    }
+
+    public void setDaytime(boolean daytime) {
+        isDaytime = daytime;
+    }
 }

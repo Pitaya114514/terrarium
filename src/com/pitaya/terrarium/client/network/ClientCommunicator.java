@@ -1,11 +1,17 @@
 package com.pitaya.terrarium.client.network;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
 public class ClientCommunicator {
+
+
+    private static final Logger LOGGER = LogManager.getLogger(ClientCommunicator.class);
     private final DatagramSocket socket;
     private DatagramPacket packet;
     private Thread communicatorThread;
@@ -34,7 +40,7 @@ public class ClientCommunicator {
                     socket.receive(packet);
                     System.out.println(packet);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    LOGGER.error("e: ", e);
                 }
             }
         });

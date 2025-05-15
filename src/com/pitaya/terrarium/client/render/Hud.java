@@ -12,11 +12,13 @@ public final class Hud {
                 GL33.glPushMatrix();
                 GL33.glColor3f(1.0f, 0.1f, 0.0f);
                 GL33.glBegin(GL33.GL_QUADS);
-                float health = (float) (5 + Main.getClient().player.entity().getHealth());
+                double health = Main.getClient().player.entity().getHealth();
+                double defaultHealth = Main.getClient().player.entity().defaultHealth;
                 GL33.glVertex2f(windowSize.x() - 130 + 5, 5);
                 GL33.glVertex2f(windowSize.x() - 130 + 5, 20);
-                GL33.glVertex2f(windowSize.x() - 130 + health, 20);
-                GL33.glVertex2f(windowSize.x() - 130 + health, 5);
+                float x = (float) (windowSize.x() - 130 + 5 + (health / defaultHealth * 100));
+                GL33.glVertex2f(x, 20);
+                GL33.glVertex2f(x, 5);
                 GL33.glEnd();
                 GL33.glPopMatrix();
             }

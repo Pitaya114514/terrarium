@@ -1,6 +1,6 @@
 package com.pitaya.terrarium.game.packet;
 
-import com.pitaya.terrarium.game.entity.life.PlayerEntity;
+import com.pitaya.terrarium.game.entity.life.player.PlayerEntity;
 
 import java.nio.ByteBuffer;
 

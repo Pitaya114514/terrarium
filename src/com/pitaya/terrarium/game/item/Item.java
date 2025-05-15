@@ -1,18 +1,17 @@
 package com.pitaya.terrarium.game.item;
 
-import com.pitaya.terrarium.game.entity.life.PlayerEntity;
+import com.pitaya.terrarium.game.entity.ItemEntity;
+import com.pitaya.terrarium.game.entity.life.player.PlayerEntity;
 import com.pitaya.terrarium.game.World;
+import org.joml.Vector2f;
 
 public abstract class Item {
     public final String name;
+    protected ItemEntity entity;
     protected PlayerEntity owner;
 
     public Item(String name) {
         this.name = name;
-    }
-
-    public PlayerEntity getOwner() {
-        return owner;
     }
 
     public void setOwner(PlayerEntity owner) {
@@ -22,6 +21,11 @@ public abstract class Item {
     public void use(World world) {
         if (owner == null) {
             return;
+        }
+    }
+    public void thrown(World world) {
+        if (owner != null) {
+            entity = new ItemEntity(this, new Vector2f(owner.position));
         }
     }
 }

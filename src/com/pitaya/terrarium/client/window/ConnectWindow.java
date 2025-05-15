@@ -11,17 +11,17 @@ import java.net.UnknownHostException;
 
 public class ConnectWindow extends JDialog {
     public ConnectWindow(Frame owner) {
-        super(owner, "Connect", true);
+        super(owner, "连接", true);
         setSize(500, 350);
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        JLabel label1 = new JLabel("IP");
+        JLabel label1 = new JLabel("地址");
         JTextField textField1 = new JFormattedTextField();
         textField1.setText("127.0.0.1");
-        JLabel label2 = new JLabel("Port");
+        JLabel label2 = new JLabel("端口");
         JTextField textField2 = new JFormattedTextField();
         textField2.setText("25565");
-        JButton button1 = new JButton("Connect");
+        JButton button1 = new JButton("连接");
         button1.addActionListener(event -> {
             try {
                 Main.getClient().connectToServer(new Server("fa", Integer.parseInt(textField2.getText()), InetAddress.getByName(textField1.getText())));

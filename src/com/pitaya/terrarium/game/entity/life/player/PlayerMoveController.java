@@ -1,4 +1,4 @@
-package com.pitaya.terrarium.game.entity.life;
+package com.pitaya.terrarium.game.entity.life.player;
 
 import com.pitaya.terrarium.game.entity.MoveController;
 

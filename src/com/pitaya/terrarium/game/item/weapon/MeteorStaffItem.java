@@ -1,7 +1,5 @@
 package com.pitaya.terrarium.game.item.weapon;
 
-import com.pitaya.terrarium.Main;
-import com.pitaya.terrarium.game.entity.barrage.Bullet;
 import com.pitaya.terrarium.game.entity.barrage.ChlorophyteBullet;
 import com.pitaya.terrarium.game.item.Item;
 import com.pitaya.terrarium.game.util.PosUtil;

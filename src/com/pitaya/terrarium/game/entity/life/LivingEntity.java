@@ -57,7 +57,9 @@ public abstract class LivingEntity extends Entity {
         healthManager.invincibilityCD = healthManager.invincibilityFrame;
     }
 
-
+    public void damage(Effect effect, double value) {
+        this.setHealth(this.health - value);
+    }
 
     public void setHealth(double health) {
         if (health >= 0) {

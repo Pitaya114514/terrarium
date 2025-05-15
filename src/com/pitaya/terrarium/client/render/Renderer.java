@@ -1,15 +1,16 @@
 package com.pitaya.terrarium.client.render;
 
 import com.pitaya.terrarium.Main;
+import com.pitaya.terrarium.client.GameLoader;
 import com.pitaya.terrarium.client.TerrariumClient;
 import com.pitaya.terrarium.client.render.resources.ResourceLoadingException;
 import com.pitaya.terrarium.client.render.resources.ResourcePack;
 import com.pitaya.terrarium.client.render.resources.Sound;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.life.LivingEntity;
-import com.pitaya.terrarium.game.entity.life.PlayerEntity;
-import com.pitaya.terrarium.game.entity.life.PlayerMoveController;
+import com.pitaya.terrarium.game.entity.life.player.PlayerMoveController;
 import com.pitaya.terrarium.game.entity.life.mob.boss.BossEntity;
+import com.pitaya.terrarium.game.item.Item;
 import com.pitaya.terrarium.game.util.Counter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,6 +19,7 @@ import org.lwjgl.openal.AL;
 import org.lwjgl.openal.ALC;
 import org.lwjgl.opengl.GL;
 
+import java.io.IOException;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -28,15 +30,6 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 public final class Renderer {
     public final static Logger LOGGER = LogManager.getLogger(Renderer.class);
-    static {
-        if (!glfwInit()) {
-            LOGGER.warn("Unable to initialize GLFW");
-        } else {
-            glfwDefaultWindowHints();
-            glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-            glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-        }
-    }
 
     private ResourcePack resourcePack;
     private boolean isInDebugMode;
@@ -48,15 +41,12 @@ public final class Renderer {
     private Thread renderThread;
     private LivingEntity targetEntity;
 
-    private double lastHealth;
-
     private final Vector2f cursorPos = new Vector2f();
     private final Vector2f windowSize = new Vector2f();
     private final Vector2f tlPos = new Vector2f();
     private final Vector2f blPos = new Vector2f();
     private final Vector2f brPos = new Vector2f();
     private final Vector2f trPos = new Vector2f();
-    private final Vector2f centerTrianglesPos = new Vector2f();
 
     public void load() {
         Runnable renderFunction = () -> {
@@ -72,6 +62,15 @@ public final class Renderer {
             }
             fpsCounter.cancel();
             glfwDestroyWindow(window);
+            try {
+                GameLoader gameLoader = Main.getClient().gameLoader;
+                gameLoader.savePlayer(gameLoader.exportPlayer(Main.getClient().player));
+                LOGGER.info("Player data has been saved: {}", Main.getClient().player.entity().name);
+                gameLoader.saveWorld(Main.getClient().terrarium.exportWorldData());
+                LOGGER.info("World data has been saved: {}", Main.getClient().terrarium.getWorldName());
+            } catch (IOException e) {
+                LOGGER.error(e);
+            }
             Main.getClient().terminateTerrarium();
         };
         if (renderThread == null || renderThread.getState() == Thread.State.TERMINATED) {
@@ -170,6 +169,13 @@ public final class Renderer {
     }
 
     private void initGl() {
+        if (!glfwInit()) {
+            LOGGER.warn("Unable to initialize GLFW");
+        } else {
+            glfwDefaultWindowHints();
+            glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+            glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+        }
         isInDebugMode = Boolean.parseBoolean(Main.getClient().properties.getProperty("debug-mode"));
         shouldAutoAim = Boolean.parseBoolean(Main.getClient().properties.getProperty("auto-aim"));
         int width = Integer.parseInt(Main.getClient().properties.getProperty("game-width"));
@@ -182,8 +188,8 @@ public final class Renderer {
         }
         glfwSetMouseButtonCallback(window, (window1, button, action, mods) -> {
             if (action != GLFW_RELEASE) {
-                switch (button) {
-                    case GLFW_MOUSE_BUTTON_LEFT -> Main.getClient().terrarium.useItem(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
+                if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                    Main.getClient().terrarium.useItem(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
                 }
             }
         });
@@ -220,7 +226,7 @@ public final class Renderer {
                 case GLFW_KEY_ENTER -> {
                     if (action != GLFW_RELEASE) {
                         CharBar charBar = (CharBar) Hud.HudItems.CHAT_BAR.getRenderModule();
-                        if (charBar.isEnable()) {
+                        if (charBar.isEnable() && !charBar.toString().isEmpty()) {
                             Main.getClient().terrarium.sendMassage(charBar.toString());
                             charBar.clear();
                         }
@@ -232,44 +238,27 @@ public final class Renderer {
             }
             if (action != GLFW_RELEASE) {
                 switch (key) {
-                    case GLFW_KEY_1 -> {
-                        Main.getClient().player.backpackIndex = 0;
-                    }
+                    case GLFW_KEY_1 -> Main.getClient().player.backpackIndex = 0;
 
-                    case GLFW_KEY_2 -> {
-                        Main.getClient().player.backpackIndex = 1;
-                    }
+                    case GLFW_KEY_2 -> Main.getClient().player.backpackIndex = 1;
 
-                    case GLFW_KEY_3 -> {
-                        Main.getClient().player.backpackIndex = 2;
-                    }
+                    case GLFW_KEY_3 -> Main.getClient().player.backpackIndex = 2;
 
-                    case GLFW_KEY_4 -> {
-                        Main.getClient().player.backpackIndex = 3;
-                    }
+                    case GLFW_KEY_4 -> Main.getClient().player.backpackIndex = 3;
 
-                    case GLFW_KEY_5 -> {
-                        Main.getClient().player.backpackIndex = 4;
-                    }
+                    case GLFW_KEY_5 -> Main.getClient().player.backpackIndex = 4;
 
-                    case GLFW_KEY_6 -> {
-                        Main.getClient().player.backpackIndex = 5;
-                    }
+                    case GLFW_KEY_6 -> Main.getClient().player.backpackIndex = 5;
 
-                    case GLFW_KEY_7 -> {
-                        Main.getClient().player.backpackIndex = 6;
-                    }
+                    case GLFW_KEY_7 -> Main.getClient().player.backpackIndex = 6;
 
-                    case GLFW_KEY_8 -> {
-                        Main.getClient().player.backpackIndex = 7;
-                    }
+                    case GLFW_KEY_8 -> Main.getClient().player.backpackIndex = 7;
 
-                    case GLFW_KEY_9 -> {
-                        Main.getClient().player.backpackIndex = 8;
-                    }
+                    case GLFW_KEY_9 -> Main.getClient().player.backpackIndex = 8;
                     case GLFW_KEY_0 -> {
-                        if (Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex) != null) {
-                            LOGGER.info(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex).name);
+                        Item item = Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex);
+                        if (item != null) {
+                            LOGGER.info(item.name);
                         }
                     }
                 }
@@ -279,16 +268,13 @@ public final class Renderer {
             windowSize.set(width1, height1);
             reload(width1, height1);
         }));
-        glfwSetCursorPosCallback(window, (window1, xpos, ypos) -> {
-        });
         glfwSetCharCallback(window, (window1, codepoint) -> {
             if (Hud.HudItems.CHAT_BAR.getRenderModule().isEnable()) {
                 ((CharBar) Hud.HudItems.CHAT_BAR.getRenderModule()).input((char) codepoint);
-
             }
         });
         glfwMakeContextCurrent(window);
-        glfwSwapInterval(1);
+        glfwSwapInterval(-1);
         GL.createCapabilities();
         int[] w = new int[1];
         int[] h = new int[1];

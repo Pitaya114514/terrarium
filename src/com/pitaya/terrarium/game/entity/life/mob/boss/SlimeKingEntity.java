@@ -9,7 +9,7 @@ import org.joml.Vector2f;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class SlimeKingEntity extends BossEntity implements Actionable {
-    enum Action {
+    public enum Action {
         DEFAULT, CHASING, TELEPORTING
     }
 

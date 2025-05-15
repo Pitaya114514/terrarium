@@ -1,6 +1,5 @@
 package com.pitaya.terrarium.client;
 
-import com.pitaya.terrarium.Main;
 import com.pitaya.terrarium.client.network.ClientCommunicator;
 import com.pitaya.terrarium.client.network.Server;
 import com.pitaya.terrarium.client.render.Renderer;
@@ -81,6 +80,7 @@ public class TerrariumClient {
 
     public final Properties properties;
     public final Terrarium terrarium;
+    public final GameLoader gameLoader;
     public final Renderer gameRenderer;
     public Player player;
     public final MainWindow mainWindow;
@@ -109,6 +109,7 @@ public class TerrariumClient {
 
         this.servers = new HashSet<>();
         this.terrarium = new Terrarium();
+        this.gameLoader = new GameLoader("saves");
         this.gameRenderer = new Renderer();
         this.mainWindow = new MainWindow();
         this.communicator = new ClientCommunicator();
@@ -129,10 +130,10 @@ public class TerrariumClient {
         }
     }
 
-    public void runTerrarium() {
-        player = new Player("Pitaya");
+    public void runTerrarium(Player player) {
+        this.player = player;
         terrarium.startWorld();
-        terrarium.addEntity(player.entity());
+        terrarium.addEntity(this.player.entity());
     }
 
     public void terminateTerrarium() {

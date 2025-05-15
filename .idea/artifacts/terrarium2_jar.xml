@@ -5,10 +5,13 @@
       <element id="archive" name="terrarium2.jar">
         <element id="module-output" name="terrarium2" />
       </element>
-      <element id="library" level="project" name="log4j2" />
-      <element id="library" level="project" name="jackson" />
-      <element id="library" level="project" name="lwjgl-glfw" />
+      <element id="library" level="project" name="lwjgl-stb" />
       <element id="library" level="project" name="lwjgl-opengl" />
+      <element id="library" level="project" name="jackson" />
+      <element id="library" level="project" name="log4j2" />
+      <element id="library" level="project" name="joml-1.10.9-20240802.170419-1" />
+      <element id="library" level="project" name="lwjgl-glfw" />
+      <element id="library" level="project" name="lwjgl-openal" />
       <element id="library" level="project" name="lwjgl" />
     </root>
   </artifact>
