@@ -138,12 +138,10 @@ public class World implements Runnable {
             if (entity instanceof Actionable) {
                 ((Actionable) entity).action(this);
             }
-            if (entity.box.damage > 0) {
-                for (Entity targetEntity : entityList) {
-                    if (entity != targetEntity && targetEntity instanceof LivingEntity livingEntity) {
-                        if (entity.box.isIntersected(targetEntity.box)) {
-                            entity.attack(livingEntity, entity.box.damage);
-                        }
+            if (entity instanceof LivingEntity target) {
+                for (Entity attacker : entityList) {
+                    if (target != attacker && attacker.box.damage > 0 && entity.box.isIntersected(attacker.box)) {
+                        attacker.attack(target, attacker.box.damage);
                     }
                 }
             }

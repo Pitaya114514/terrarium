@@ -274,7 +274,7 @@ public final class Renderer {
             }
         });
         glfwMakeContextCurrent(window);
-        glfwSwapInterval(-1);
+        glfwSwapInterval(1);
         GL.createCapabilities();
         int[] w = new int[1];
         int[] h = new int[1];

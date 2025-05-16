@@ -13,12 +13,12 @@ public class MainWindow extends JFrame {
 
     public MainWindow() {
         super("Terrarium");
+        JPanel mainPanel = new JPanel();
         JMenuBar menuBar = getBar();
         setLocation(20, 20);
         setSize(450, 300);
         setResizable(false);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        JPanel mainPanel = new JPanel();
         setJMenuBar(menuBar);
         add(mainPanel);
     }
@@ -33,8 +33,6 @@ public class MainWindow extends JFrame {
                 singleplayerWindow = new SingleplayerWindow(this);
                 singleplayerWindow.setVisible(true);
             }
-//            Main.getClient().runTerrarium();
-//            Main.getClient().loadRenderer();
         });
         JMenuItem menuItem2 = new JMenuItem("多人游戏");
         menuItem2.addActionListener(e -> {
