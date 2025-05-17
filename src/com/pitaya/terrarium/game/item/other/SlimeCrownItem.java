@@ -11,8 +11,7 @@ public class SlimeCrownItem extends Item {
     }
 
     @Override
-    public void use(World world) {
-        super.use(world);
-        world.addEntity(new SlimeKingEntity(PosUtil.getRandomPos(owner.position, 600), owner.position));
+    public void useFuc(World world) {
+        world.addEntity(new SlimeKingEntity(PosUtil.getRandomPos(owner.position, 600), owner));
     }
 }

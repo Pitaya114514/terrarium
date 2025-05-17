@@ -1,10 +1,15 @@
 package com.pitaya.terrarium.client.window;
 
+import com.pitaya.terrarium.Main;
 import com.pitaya.terrarium.client.Player;
 import com.pitaya.terrarium.game.World;
+import org.apache.logging.log4j.spi.NoOpThreadContextMap;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
 public class MainWindow extends JFrame {
     private OptionWindow optionWindow;
@@ -15,10 +20,10 @@ public class MainWindow extends JFrame {
         super("Terrarium");
         JPanel mainPanel = new JPanel();
         JMenuBar menuBar = getBar();
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocation(20, 20);
         setSize(450, 300);
         setResizable(false);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
         setJMenuBar(menuBar);
         add(mainPanel);
     }

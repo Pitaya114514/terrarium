@@ -10,6 +10,6 @@ public class OnFireDebuff extends Debuff {
     @Override
     public void effect(World world) {
         super.effect(world);
-        attached.damage(this, 4 / 60.0f);
+        attached.setHealth(attached.getHealth() - 4 / 60.0f);
     }
 }

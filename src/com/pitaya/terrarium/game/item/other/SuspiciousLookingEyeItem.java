@@ -11,8 +11,7 @@ public class SuspiciousLookingEyeItem extends Item {
     }
 
     @Override
-    public void use(World world) {
-        super.use(world);
-        world.addEntity(new EyeOfCthulhuEntity(PosUtil.getRandomPos(owner.position, 600), owner.position));
+    public void useFuc(World world) {
+        world.addEntity(new EyeOfCthulhuEntity(PosUtil.getRandomPos(owner.position, 600), owner));
     }
 }

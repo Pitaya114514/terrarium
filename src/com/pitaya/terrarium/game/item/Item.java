@@ -18,11 +18,15 @@ public abstract class Item {
         this.owner = owner;
     }
 
+    protected abstract void useFuc(World world);
+
     public void use(World world) {
         if (owner == null) {
             return;
         }
+        useFuc(world);
     }
+
     public void thrown(World world) {
         if (owner != null) {
             entity = new ItemEntity(this, new Vector2f(owner.position));

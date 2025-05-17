@@ -77,7 +77,7 @@ public class WorldLoader {
     }
 
     public World importWorld(String worldData) throws IOException {
-        WorldJSON json = null;
+        WorldJSON json;
         World world;
         try {
             json = mapper.readValue(worldData, WorldJSON.class);

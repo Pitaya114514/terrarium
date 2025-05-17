@@ -12,7 +12,7 @@ import java.util.List;
 
 public class Terrarium {
     public static final Logger LOGGER = LogManager.getLogger(Terrarium.class);
-    public static final String VERSION = "b1.3.1";
+    public static final String VERSION = "b1.3.2";
     public final WorldLoader worldLoader;
     private World mainWorld;
 

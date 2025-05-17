@@ -1,7 +1,6 @@
 package com.pitaya.terrarium.game;
 
 import com.pitaya.terrarium.game.effect.Effect;
-import com.pitaya.terrarium.game.entity.Actionable;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.barrage.BarrageEntity;
 import com.pitaya.terrarium.game.entity.life.HealthManager;
@@ -16,6 +15,8 @@ import org.apache.logging.log4j.Logger;
 import org.joml.Vector2f;
 
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -45,10 +46,8 @@ public class World implements Runnable {
         this.chatroom = new Chatroom();
         chatroom.addListener(event -> {
             List<String> messageList = ((Chatroom) event.getSource()).getMessageList();
-            String message = messageList.get(messageList.size() - 1);
-            if (message != null) {
-                LOGGER.info("{} -> {}", date.toString(), message);
-            }
+            String message = messageList.getLast();
+            LOGGER.info("{} -> {}", date.toString(), message);
         });
     }
 
@@ -103,7 +102,7 @@ public class World implements Runnable {
 
         for (int i = 0; i < entityList.size(); i++) {
             Entity entity = entityList.get(i);
-            entity.time++;
+            entity.addTime();
             if (entity instanceof LivingEntity livingEntity) {
                 HealthManager hm = livingEntity.healthManager;
                 if (hm.invincibilityCD > 0) {
@@ -135,9 +134,7 @@ public class World implements Runnable {
                     entity.moveController.resetFloatTime();
                 }
             }
-            if (entity instanceof Actionable) {
-                ((Actionable) entity).action(this);
-            }
+            entity.getAction().act(this);
             if (entity instanceof LivingEntity target) {
                 for (Entity attacker : entityList) {
                     if (target != attacker && attacker.box.damage > 0 && entity.box.isIntersected(attacker.box)) {
@@ -149,19 +146,24 @@ public class World implements Runnable {
         for (WorldListener listener : tickEventListeners) {
             listener.trigger(new WorldEvent(this));
         }
-        disposableTickEventListeners.removeIf(new Predicate<>() {
-            @Override
-            public boolean test(WorldListener listener) {
-                listener.trigger(new WorldEvent(this));
-                return true;
-            }
-        });
+        try {
+            disposableTickEventListeners.removeIf(new Predicate<>() {
+                @Override
+                public boolean test(WorldListener listener) {
+                    listener.trigger(new WorldEvent(this));
+                    return true;
+                }
+            });
+        } catch (ConcurrentModificationException e) {
+            LOGGER.warn("Skip an event", e);
+        }
     }
 
     public void addEntity(Entity entity) {
         entityList.add(entity);
         entity.moveController.setGravity(gravity);
         entity.setAlive(true);
+        entity.getAction().start(this);
         if (entity instanceof BossEntity) {
             chatroom.sendMessage(String.format("%s已苏醒！", entity.name));
         } else if (entity instanceof PlayerEntity) {
@@ -171,7 +173,8 @@ public class World implements Runnable {
     }
 
     public void removeEntity(Entity entity) {
-        addDisposableTickEventListener(event -> {
+        disposableTickEventListeners.add(e -> {
+            entity.getAction().end(this);
             boolean removed = entityList.remove(entity);
             if (removed) {
                 entity.setAlive(false);

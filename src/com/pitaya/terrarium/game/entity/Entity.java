@@ -1,14 +1,43 @@
 package com.pitaya.terrarium.game.entity;
 
+import com.pitaya.terrarium.game.World;
 import com.pitaya.terrarium.game.entity.life.LivingEntity;
 import org.joml.Vector2f;
 
 public abstract class Entity {
+    public static class EntityGroups {
+        public static final int DEFAULT = 0;
+        public static final int ANIMAL = 1;
+        public static final int PLAYER = 2;
+        public static final int MOB = 2;
+
+        public static boolean isHostile(Entity yourEntity, Entity targetEntity) {
+            return yourEntity.getGroup() >= targetEntity.getGroup();
+        }
+    }
+
     public final String name;
     public final Box box;
     public final MoveController moveController;
     public final Vector2f position = new Vector2f();
-    public int time;
+    protected Action action = new Action(position) {
+        @Override
+        public void start(World world) {
+
+        }
+
+        @Override
+        public void act(World world) {
+
+        }
+
+        @Override
+        public void end(World world) {
+
+        }
+    };
+    private int group;
+    private int time;
     private boolean isAlive;
     private Entity attackTarget;
 
@@ -54,5 +83,26 @@ public abstract class Entity {
 
     public void setAttackTarget(Entity attackTarget) {
         this.attackTarget = attackTarget;
+    }
+
+    public Action getAction() {
+        return action;
+    }
+
+    public void addTime() {
+        time++;
+    }
+
+    public int getTime() {
+        return time;
+    }
+
+    public int getGroup() {
+        return group;
+    }
+
+    public void setGroup(int group) {
+        if (group >= EntityGroups.DEFAULT)
+        this.group = group;
     }
 }

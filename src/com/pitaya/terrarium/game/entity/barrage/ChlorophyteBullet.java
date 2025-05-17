@@ -1,40 +1,52 @@
 package com.pitaya.terrarium.game.entity.barrage;
 
-import com.pitaya.terrarium.game.entity.Actionable;
-import com.pitaya.terrarium.game.util.PosUtil;
 import com.pitaya.terrarium.game.World;
+import com.pitaya.terrarium.game.entity.Entity;
+import com.pitaya.terrarium.game.entity.life.LivingEntity;
+import com.pitaya.terrarium.game.entity.life.mob.MobEntity;
+import com.pitaya.terrarium.game.util.PosUtil;
 import org.joml.Vector2f;
 
-public class ChlorophyteBullet extends Bullet implements Actionable {
-    private Vector2f target2;
-    private float speed2;
+public class ChlorophyteBullet extends Bullet {
+    public class ChlorophyteBulletAction extends BulletAction {
+        private Entity targetEntity;
+        private int cd;
 
-    public ChlorophyteBullet(Vector2f position, Vector2f targetPos1, Vector2f targetPos2, float speed) {
-        super(position, targetPos1, speed);
-        target2 = targetPos2;
-        speed2 = speed;
-    }
+        public ChlorophyteBulletAction(Vector2f position, Vector2f targetPos, float speed) {
+            super(position, targetPos, speed);
+        }
 
-    @Override
-    public void action(World world) {
-        if (time < 60) {
-            super.action(world);
-        } else {
-            speed2 += 0.015f;
-            double distance = position.distance(target2);
-            if (distance < speed2) {
-                PosUtil.movePos(position, PosUtil.getDirection(position, target2), PosUtil.getSlope(position, target2), (float) distance);
-            } else {
-                PosUtil.movePos(position, PosUtil.getDirection(position, target2), PosUtil.getSlope(position, target2), speed2);
+        @Override
+        public void start(World world) {
+            super.start(world);
+            findTarget(world);
+        }
+
+        @Override
+        public void act(World world) {
+            if (penetration > 0) {
+                world.removeEntity(ChlorophyteBullet.this);
             }
-            if (penetration >= 1 || time > 700) {
-                world.removeEntity(this);
+            cd++;
+            if (cd > 23 && targetEntity != null && targetEntity.isAlive()) {
+                PosUtil.movePos(position, PosUtil.getDirection(position, targetEntity.position), PosUtil.getSlope(position, targetEntity.position), speed);
+            } else {
+                super.act(world);
+            }
+        }
+
+        private void findTarget(World world) {
+            for (Entity entity : world.entityList) {
+                if (entity instanceof MobEntity) {
+                    targetEntity = entity;
+                    return;
+                }
             }
         }
     }
 
-    @Override
-    public void setTarget(Vector2f pos) {
-        super.setTarget(pos);
+    public ChlorophyteBullet(Vector2f position, Vector2f targetPos, float speed) {
+        super(position, targetPos, speed);
+        action = new ChlorophyteBulletAction(this.position, targetPos, speed);
     }
 }

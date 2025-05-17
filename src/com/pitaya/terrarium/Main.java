@@ -10,7 +10,7 @@ public final class Main {
     private static TerrariumServer server;
 
     public static void main(String[] args) {
-        if (args.length != 0 && Objects.equals(args[0], "-server")) {
+        if (args.length != 0 && ("-server".equals(args[0]) || "-s".equals(args[0]) || "-Server".equals(args[0]))) {
             server = new TerrariumServer();
         } else {
             client = new TerrariumClient();

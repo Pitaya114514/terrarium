@@ -8,6 +8,8 @@ import com.pitaya.terrarium.client.WorldData;
 import com.pitaya.terrarium.game.World;
 import com.pitaya.terrarium.game.entity.life.player.PlayerDifficulty;
 import com.pitaya.terrarium.game.world.WorldDifficulty;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,6 +17,8 @@ import java.io.IOException;
 import java.util.Enumeration;
 
 public class SingleplayerWindow extends JDialog {
+
+    private static final Logger LOGGER = LogManager.getLogger(SingleplayerWindow.class);
 
     public SingleplayerWindow(MainWindow mainWindow) {
         super(mainWindow, "单人游戏", true);
@@ -100,11 +104,11 @@ public class SingleplayerWindow extends JDialog {
 
         JPanel playerPanel = new JPanel();
         playerPanel.setLayout(new BorderLayout());
-        JList<Player> playerJList;
+        JList<Player> playerJList = new JList<>();
         try {
             playerJList = new JList<>(gameLoader.scanPlayers());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            LOGGER.error("Unable to read player data", e);
         }
         playerJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane playerScrollPane = new JScrollPane(playerJList);
@@ -163,8 +167,9 @@ public class SingleplayerWindow extends JDialog {
         add(mainPanel);
         setSize(1000, 700);
         setResizable(false);
-        playerJList.addListSelectionListener(e -> wjbutton.setEnabled(shouldJoinWorld(playerJList, worldDataJList)));
-        worldDataJList.addListSelectionListener(e -> wjbutton.setEnabled(shouldJoinWorld(playerJList, worldDataJList)));
+        JList<Player> finalPlayerJList1 = playerJList;
+        playerJList.addListSelectionListener(e -> wjbutton.setEnabled(shouldJoinWorld(finalPlayerJList1, worldDataJList)));
+        worldDataJList.addListSelectionListener(e -> wjbutton.setEnabled(shouldJoinWorld(finalPlayerJList1, worldDataJList)));
         wjbutton.setEnabled(shouldJoinWorld(playerJList, worldDataJList));
     }
 

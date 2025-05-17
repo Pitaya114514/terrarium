@@ -5,6 +5,8 @@ import com.pitaya.terrarium.game.World;
 import com.pitaya.terrarium.game.entity.life.player.PlayerDifficulty;
 import com.pitaya.terrarium.game.item.Item;
 import com.pitaya.terrarium.game.world.WorldLoader;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +16,8 @@ import java.nio.file.Paths;
 import java.util.*;
 
 public class GameLoader extends WorldLoader {
+    private static final Logger LOGGER = LogManager.getLogger(GameLoader.class);
+
     private static class PlayerJSON {
         private String name;
         private PlayerDifficulty difficulty;
@@ -113,7 +117,16 @@ public class GameLoader extends WorldLoader {
         List<Player> playerList = new ArrayList<>();
         List<File> jsonFiles = Arrays.stream(files).filter(file -> file.isFile() && file.getName().endsWith(".json")).toList();
         for (File jsonFile : jsonFiles) {
-            playerList.add(importPlayer(jsonFile));
+            try {
+                Player e = importPlayer(jsonFile);
+                playerList.add(e);
+            } catch (Exception e) {
+                if (e instanceof IOException ioe) {
+                    throw ioe;
+                } else {
+                    LOGGER.error("Invalid or corrupted player data: {}", jsonFile.getName(), e);
+                }
+            }
         }
         return playerList.toArray(new Player[0]);
     }
@@ -134,22 +147,18 @@ public class GameLoader extends WorldLoader {
         return worldDataList.toArray(new WorldData[0]);
     }
 
-    public Player importPlayer(File file) throws IOException {
+    public Player importPlayer(File file) throws Exception {
         PlayerJSON playerData = mapper.readValue(file, PlayerJSON.class);
         Player player = new Player(playerData.getName(), playerData.getDifficulty());
         player.entity().setHealth(playerData.getHealth());
         player.entity().setDefense(playerData.getDefense());
-        try {
-            for (String itemData : playerData.getInventory()) {
-                if (itemData != null) {
-                    Object item = Class.forName(itemData).getDeclaredConstructor().newInstance();
-                    if (item instanceof Item trueItem) {
-                        player.entity().getBackpack().addItem(trueItem);
-                    }
+        for (String itemData : playerData.getInventory()) {
+            if (itemData != null) {
+                Object item = Class.forName(itemData).getDeclaredConstructor().newInstance();
+                if (item instanceof Item trueItem) {
+                    player.entity().getBackpack().addItem(trueItem);
                 }
             }
-        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException exception) {
-            return null;
         }
         player.entity().moveController.setGravity(playerData.getGravity());
         return player;

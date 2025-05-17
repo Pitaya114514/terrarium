@@ -6,7 +6,6 @@ import com.pitaya.terrarium.game.entity.life.LivingEntity;
 import com.pitaya.terrarium.game.item.Backpack;
 import com.pitaya.terrarium.game.item.other.*;
 import com.pitaya.terrarium.game.item.weapon.BoomstickItem;
-import com.pitaya.terrarium.game.item.weapon.MeteorStaffItem;
 import org.joml.Vector2f;
 
 public class PlayerEntity extends LivingEntity {
@@ -19,7 +18,6 @@ public class PlayerEntity extends LivingEntity {
         this.difficulty = difficulty == null ? PlayerDifficulty.CLASSIC : difficulty;
         backpack.addItem(new SlimeCrownItem());
         backpack.addItem(new SuspiciousLookingEyeItem());
-        backpack.addItem(new MeteorStaffItem());
         backpack.addItem(new BoomstickItem());
     }
 

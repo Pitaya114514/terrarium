@@ -32,15 +32,15 @@ public abstract class LivingEntity extends Entity {
         return health;
     }
 
-    public void damage(Entity source, double value) {
+    public boolean damage(Entity source, double value) {
         if (this instanceof MobEntity && source.box.isDangerous) {
-            return;
+            return false;
         }
         if (!(this instanceof MobEntity) && !source.box.isDangerous) {
-            return;
+            return false;
         }
         if (source == this || value <= 0 || healthManager.isInvincible) {
-            return;
+            return false;
         }
 
         double h = value - this.defense;
@@ -55,10 +55,7 @@ public abstract class LivingEntity extends Entity {
         healthManager.isWounded = true;
         healthManager.setAttacker(source);
         healthManager.invincibilityCD = healthManager.invincibilityFrame;
-    }
-
-    public void damage(Effect effect, double value) {
-        this.setHealth(this.health - value);
+        return true;
     }
 
     public void setHealth(double health) {

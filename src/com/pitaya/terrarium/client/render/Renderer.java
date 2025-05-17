@@ -15,6 +15,7 @@ import com.pitaya.terrarium.game.util.Counter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joml.Vector2f;
+import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.ALC;
 import org.lwjgl.opengl.GL;
@@ -38,8 +39,10 @@ public final class Renderer {
     private Camara camara;
     private Hud hud;
     private long window;
+    private long monitor;
     private Thread renderThread;
     private LivingEntity targetEntity;
+    private boolean isRunning;
 
     private final Vector2f cursorPos = new Vector2f();
     private final Vector2f windowSize = new Vector2f();
@@ -54,6 +57,7 @@ public final class Renderer {
             playSound(resourcePack.soundPack.roar_1);
             fpsCounter = new Counter();
             fpsCounter.schedule();
+            isRunning = true;
             while (!glfwWindowShouldClose(window)) {
                 update();
                 fpsCounter.addCount();
@@ -61,7 +65,8 @@ public final class Renderer {
                 glfwSwapBuffers(window);
             }
             fpsCounter.cancel();
-            glfwDestroyWindow(window);
+            isRunning = false;
+            closeWindow();
             try {
                 GameLoader gameLoader = Main.getClient().gameLoader;
                 gameLoader.savePlayer(gameLoader.exportPlayer(Main.getClient().player));
@@ -183,6 +188,7 @@ public final class Renderer {
         String title = isInDebugMode ? "Terrarium" :
                 TerrariumClient.TITLE_LIST.get(ThreadLocalRandom.current().nextInt(TerrariumClient.TITLE_LIST.size()));
         window = glfwCreateWindow(width, height, title, NULL, NULL);
+        monitor = glfwGetPrimaryMonitor();
         if (window == NULL) {
             throw new IllegalStateException("Unable to create game window");
         }
@@ -223,6 +229,20 @@ public final class Renderer {
                     }
                 }
 
+                case GLFW_KEY_F12 -> {
+                    if (action == GLFW_PRESS) {
+                        if (glfwGetWindowMonitor(window) == 0) {
+                            GLFWVidMode glfwVidMode = glfwGetVideoMode(monitor);
+                            int width1 = glfwVidMode.width();
+                            int height1 = glfwVidMode.height();
+                            glfwSetWindowMonitor(window, monitor, 0, 0, width1, height1, glfwVidMode.refreshRate());
+                            reload(width1, height1);
+                        } else {
+                            glfwSetWindowMonitor(window, 0, 100, 100, 800, 600, 0);
+                        }
+                    }
+                }
+
                 case GLFW_KEY_ENTER -> {
                     if (action != GLFW_RELEASE) {
                         CharBar charBar = (CharBar) Hud.HudItems.CHAT_BAR.getRenderModule();
@@ -255,6 +275,7 @@ public final class Renderer {
                     case GLFW_KEY_8 -> Main.getClient().player.backpackIndex = 7;
 
                     case GLFW_KEY_9 -> Main.getClient().player.backpackIndex = 8;
+
                     case GLFW_KEY_0 -> {
                         Item item = Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex);
                         if (item != null) {
@@ -316,6 +337,14 @@ public final class Renderer {
             return 0;
         }
         return fpsCounter.getValue();
+    }
+
+    public boolean isRunning() {
+        return isRunning;
+    }
+
+    public void closeWindow() {
+        glfwDestroyWindow(window);
     }
 
     private void playSound(Sound sound) {

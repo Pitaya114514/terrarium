@@ -1,6 +1,6 @@
 package com.pitaya.terrarium.game.entity.life.mob;
 
-import com.pitaya.terrarium.game.entity.Actionable;
+import com.pitaya.terrarium.game.entity.Action;
 import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.MoveController;
@@ -9,36 +9,41 @@ import com.pitaya.terrarium.game.util.PosUtil;
 import com.pitaya.terrarium.game.World;
 import org.joml.Vector2f;
 
-public class ServantOfCthulhuEntity extends MobEntity implements Actionable {
-    private Vector2f target = new Vector2f();
+public class ServantOfCthulhuEntity extends MobEntity {
 
-    public ServantOfCthulhuEntity(Vector2f position, Vector2f target) {
+    public ServantOfCthulhuEntity(Vector2f position, Entity target) {
         super("Servant of Cthulhu", new Box(10, 5, 34, true), new MoveController(true), position, 15, 0, 5);
-        setTarget(target);
+        action = new Action(this.position) {
+            @Override
+            public void start(World world) {
+                setTargetEntity(target);
+            }
+
+            @Override
+            public void act(World world) {
+                if (target != null) {
+                    float slope = PosUtil.getSlope(this.position, getTargetPos());
+                    boolean direction = PosUtil.getDirection(this.position, getTargetPos());
+                    float maxSpeed = 2.5f;
+                    PosUtil.movePos(this.position, direction, slope, maxSpeed);
+                } else {
+                    world.removeEntity(ServantOfCthulhuEntity.this);
+                }
+            }
+
+            @Override
+            public void end(World world) {
+
+            }
+        };
     }
 
     @Override
-    public void setTarget(Vector2f pos) {
-        this.target = pos;
-    }
-
-    @Override
-    public void action(World world) {
-        if (target != null) {
-            float slope = PosUtil.getSlope(this.position, target);
-            boolean direction = PosUtil.getDirection(this.position, target);
-            float maxSpeed = 2.5f;
-            PosUtil.movePos(this.position, direction, slope, maxSpeed);
-        } else {
-            world.removeEntity(this);
-        }
-    }
-
-    @Override
-    public void damage(Entity source, double value) {
+    public boolean damage(Entity source, double value) {
         if (source instanceof EyeOfCthulhuEntity) {
-            return;
+            return false;
         }
         super.damage(source, value);
+        return true;
     }
 }
