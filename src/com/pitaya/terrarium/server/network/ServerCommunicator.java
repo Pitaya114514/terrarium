@@ -1,38 +1,50 @@
 package com.pitaya.terrarium.server.network;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
+import com.pitaya.terrarium.game.network.CommunicationException;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.net.*;
 
 public class ServerCommunicator {
-    private DatagramSocket socket;
-    private DatagramPacket packet;
-    private Thread communicatorThread;
+    private static final Logger LOGGER = LogManager.getLogger(ServerCommunicator.class);
+    private final EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+    private final EventLoopGroup workerGroup = new NioEventLoopGroup();
+    private final int port;
+    private final InetAddress address;
 
     public ServerCommunicator(int port, InetAddress address) {
-        try {
-            socket = new DatagramSocket(port, address);
-        } catch (SocketException e) {
-            throw new RuntimeException(e);
-        }
-        packet = new DatagramPacket(new byte[1024], 1024);
+        this.port = port;
+        this.address = address;
     }
 
-    public void load() {
-        communicatorThread = new Thread(() -> {
-            while (true) {
-                try {
-                    socket.receive(packet);
-                    socket.send(packet);
-                    System.out.println(packet);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-        communicatorThread.setName("CommunicatorThread");
-        communicatorThread.start();
+    public void load() throws CommunicationException {
+        try {
+            ServerBootstrap bootstrap = new ServerBootstrap();
+            bootstrap.group(bossGroup, workerGroup)
+                    .channel(NioServerSocketChannel.class)
+                    .childHandler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        public void initChannel(SocketChannel ch) {
+                            ch.pipeline().addLast(new ServerHandler());
+                        }
+                    });
+            ChannelFuture future = bootstrap.bind(address, port).sync();
+            LOGGER.info("The server has started, IP={}, port={}", address, port);
+            future.channel().closeFuture().sync();
+        } catch (Exception e) {
+            throw new CommunicationException(e);
+        } finally {
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+        }
+
     }
 }

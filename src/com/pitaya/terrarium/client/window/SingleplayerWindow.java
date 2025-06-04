@@ -1,13 +1,12 @@
 package com.pitaya.terrarium.client.window;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.pitaya.terrarium.Main;
 import com.pitaya.terrarium.client.GameLoader;
 import com.pitaya.terrarium.client.Player;
-import com.pitaya.terrarium.client.WorldData;
 import com.pitaya.terrarium.game.World;
 import com.pitaya.terrarium.game.entity.life.player.PlayerDifficulty;
 import com.pitaya.terrarium.game.world.WorldDifficulty;
+import com.pitaya.terrarium.game.world.WorldInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,6 +14,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.concurrent.CompletableFuture;
 
 public class SingleplayerWindow extends JDialog {
 
@@ -22,7 +22,6 @@ public class SingleplayerWindow extends JDialog {
 
     public SingleplayerWindow(MainWindow mainWindow) {
         super(mainWindow, "单人游戏", true);
-        GameLoader gameLoader = Main.getClient().gameLoader;
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
 
@@ -52,7 +51,7 @@ public class SingleplayerWindow extends JDialog {
                         difficulty = WorldDifficulty.valueOf(btn.getText());
                     }
                 }
-                gameLoader.saveWorld(gameLoader.exportWorld(new World(wName.getText(), 10, difficulty)));
+                GameLoader.saveWorld(GameLoader.exportWorld(new World(wName.getText(), 10, difficulty).getInfo()));
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -86,7 +85,7 @@ public class SingleplayerWindow extends JDialog {
                         difficulty = PlayerDifficulty.valueOf(btn.getText());
                     }
                 }
-                gameLoader.savePlayer(gameLoader.exportPlayer(new Player(pName.getText(), difficulty)));
+                GameLoader.savePlayer(GameLoader.exportPlayer(new Player(pName.getText(), difficulty)));
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -106,8 +105,8 @@ public class SingleplayerWindow extends JDialog {
         playerPanel.setLayout(new BorderLayout());
         JList<Player> playerJList = new JList<>();
         try {
-            playerJList = new JList<>(gameLoader.scanPlayers());
-        } catch (IOException e) {
+            playerJList = new JList<>(GameLoader.scanPlayers());
+        } catch (Exception e) {
             LOGGER.error("Unable to read player data", e);
         }
         playerJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -125,20 +124,21 @@ public class SingleplayerWindow extends JDialog {
         playerButtonPanel.add(pButton);
         JButton refreshPlayerButton = new JButton("刷新");
         playerButtonPanel.add(refreshPlayerButton);
-        playerButtonPanel.add(new JButton("删除该玩家"));
+        JButton delPlayerButton = new JButton("删除该玩家");
+        playerButtonPanel.add(delPlayerButton);
         playerPanel.add(playerButtonPanel, BorderLayout.SOUTH);
         mainPanel.add(playerPanel, BorderLayout.WEST);
 
         JPanel worldPanel = new JPanel();
         worldPanel.setLayout(new BorderLayout());
-        JList<WorldData> worldDataJList;
+        JList<WorldInfo> worldJList = new JList<>();
         try {
-            worldDataJList = new JList<>(gameLoader.scanWorldData());
+            worldJList = new JList<>(GameLoader.scanWorlds());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            LOGGER.error("Unable to read world data", e);
         }
-        worldDataJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        JScrollPane worldScrollPane = new JScrollPane(worldDataJList);
+        worldJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        JScrollPane worldScrollPane = new JScrollPane(worldJList);
         worldPanel.add(worldScrollPane);
         JPanel worldButtonPanel = new JPanel();
         worldButtonPanel.setLayout(new FlowLayout());
@@ -154,11 +154,16 @@ public class SingleplayerWindow extends JDialog {
         worldButtonPanel.add(new JButton("删除该世界"));
         JButton wjbutton = new JButton("加入该世界");
         JList<Player> finalPlayerJList = playerJList;
+        JList<WorldInfo> finalWorldJList = worldJList;
         wjbutton.addActionListener(e -> {
             this.setVisible(false);
-            Main.getClient().loadRenderer();
-            Main.getClient().terrarium.importWorldData(worldDataJList.getSelectedValue().getData());
-            Main.getClient().runTerrarium(finalPlayerJList.getSelectedValue());
+            CompletableFuture.runAsync(() -> Main.getClient().runLocalTerrarium(finalPlayerJList.getSelectedValue(), finalWorldJList.getSelectedValue()))
+                    .exceptionally(exception -> {
+                        String message = String.format("Unable to load world: %s", exception) ;
+                        LOGGER.error(message);
+                        JOptionPane.showMessageDialog(this, message, "无法加载世界", JOptionPane.ERROR_MESSAGE);
+                        return null;
+                    });
         });
         worldButtonPanel.add(wjbutton);
         worldPanel.add(worldButtonPanel, BorderLayout.SOUTH);
@@ -167,13 +172,12 @@ public class SingleplayerWindow extends JDialog {
         add(mainPanel);
         setSize(1000, 700);
         setResizable(false);
-        JList<Player> finalPlayerJList1 = playerJList;
-        playerJList.addListSelectionListener(e -> wjbutton.setEnabled(shouldJoinWorld(finalPlayerJList1, worldDataJList)));
-        worldDataJList.addListSelectionListener(e -> wjbutton.setEnabled(shouldJoinWorld(finalPlayerJList1, worldDataJList)));
-        wjbutton.setEnabled(shouldJoinWorld(playerJList, worldDataJList));
+        playerJList.addListSelectionListener(e -> wjbutton.setEnabled(shouldJoinWorld(finalPlayerJList, finalWorldJList)));
+        worldJList.addListSelectionListener(e -> wjbutton.setEnabled(shouldJoinWorld(finalPlayerJList, finalWorldJList)));
+        wjbutton.setEnabled(shouldJoinWorld(playerJList, worldJList));
     }
 
-    public boolean shouldJoinWorld(JList<Player> playerJList, JList<WorldData> worldDataJList) {
-        return playerJList.getSelectedValue() != null && worldDataJList.getSelectedValue() != null;
+    public boolean shouldJoinWorld(JList<Player> playerJList, JList<WorldInfo> worldJList) {
+        return playerJList.getSelectedValue() != null && worldJList.getSelectedValue() != null;
     }
 }

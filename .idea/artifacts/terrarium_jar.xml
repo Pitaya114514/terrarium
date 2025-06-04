@@ -1,0 +1,21 @@
+<component name="ArtifactManager">
+  <artifact name="terrarium:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/terrarium_jar</output-path>
+    <root id="root">
+      <element id="archive" name="terrarium2.jar">
+        <element id="module-output" name="terrarium2" />
+      </element>
+      <element id="library" level="project" name="lwjgl-openal" />
+      <element id="library" level="project" name="log4j2" />
+      <element id="library" level="project" name="lwjgl-opengl" />
+      <element id="library" level="project" name="reflections-0.10.2" />
+      <element id="library" level="project" name="jackson" />
+      <element id="library" level="project" name="lwjgl-glfw" />
+      <element id="library" level="project" name="lwjgl-stb" />
+      <element id="library" level="project" name="lwjgl" />
+      <element id="library" level="project" name="guava-23.0" />
+      <element id="library" level="project" name="joml-1.10.9-20240802.170419-1" />
+      <element id="library" level="project" name="netty-all-4.1.68.Final" />
+    </root>
+  </artifact>
+</component>

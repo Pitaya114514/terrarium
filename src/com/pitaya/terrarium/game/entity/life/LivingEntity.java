@@ -5,7 +5,6 @@ import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.MoveController;
 import com.pitaya.terrarium.game.entity.barrage.BarrageEntity;
-import com.pitaya.terrarium.game.entity.life.mob.MobEntity;
 import org.joml.Vector2f;
 
 import java.util.HashSet;
@@ -18,8 +17,8 @@ public abstract class LivingEntity extends Entity {
     private double health;
     private double defense;
 
-    public LivingEntity(String name, Box box, MoveController moveController, Vector2f position, double defaultHealth, double defense, int invincibilityFrame) {
-        super(name, box, moveController, position);
+    public LivingEntity(String name, Box box, MoveController moveController, Vector2f position, double defaultHealth, double defense, int invincibilityFrame, EntityGroups group) {
+        super(name, box, moveController, position, group);
         this.effectSet = new HashSet<>();
         this.defaultHealth = defaultHealth;
         this.health = defaultHealth;
@@ -32,15 +31,9 @@ public abstract class LivingEntity extends Entity {
         return health;
     }
 
-    public boolean damage(Entity source, double value) {
-        if (this instanceof MobEntity && source.box.isDangerous) {
-            return false;
-        }
-        if (!(this instanceof MobEntity) && !source.box.isDangerous) {
-            return false;
-        }
-        if (source == this || value <= 0 || healthManager.isInvincible) {
-            return false;
+    public void damage(Entity source, double value) {
+        if (source == this || value <= 0 || healthManager.isInvincible || !EntityGroups.isHostile(source, this)) {
+            return;
         }
 
         double h = value - this.defense;
@@ -55,7 +48,6 @@ public abstract class LivingEntity extends Entity {
         healthManager.isWounded = true;
         healthManager.setAttacker(source);
         healthManager.invincibilityCD = healthManager.invincibilityFrame;
-        return true;
     }
 
     public void setHealth(double health) {

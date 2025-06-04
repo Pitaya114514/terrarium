@@ -5,6 +5,7 @@ import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.MoveController;
 import com.pitaya.terrarium.game.World;
+import com.pitaya.terrarium.game.entity.life.mob.BlueSlimeEntity;
 import org.joml.Vector2f;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -13,10 +14,10 @@ public class SlimeKingEntity extends BossEntity {
 
 
     public SlimeKingEntity(Vector2f position, Entity target) {
-        super("Slime King", new Box(200, 155, 96, true), new MoveController(false), position, 3570, 10, 5);
-        action = new Action(this.position) {
+        super("Slime King", new Box(200, 155, 96), new MoveController(false), position, 3570, 10, 5);
+        action = new Action(this) {
             enum Action {
-                DEFAULT, TELEPORTING, CHASING;
+                DEFAULT, TELEPORTING, CHASING
             }
 
             private Entity aTarget;
@@ -26,6 +27,8 @@ public class SlimeKingEntity extends BossEntity {
             public void start(World world) {
                 position.set(0, 0);
                 aTarget = target;
+                world.addEntity(new BlueSlimeEntity(new Vector2f(entity.position)));
+
             }
 
             @Override
@@ -42,7 +45,7 @@ public class SlimeKingEntity extends BossEntity {
                 switch (actionState) {
                     case CHASING -> {
                         if (!SlimeKingEntity.this.moveController.isFloating()) {
-                            SlimeKingEntity.this.moveController.jump(ThreadLocalRandom.current().nextFloat(60.0f, 400.0f));
+                            SlimeKingEntity.this.moveController.jump(ThreadLocalRandom.current().nextFloat(60.0f, 400.0f), world.gravity);
                         } else {
                             SlimeKingEntity.this.moveController.moveHorizontallyTo(aTarget.position.x() - position.x() > 0, 0.5f);
                         }
@@ -53,7 +56,6 @@ public class SlimeKingEntity extends BossEntity {
 
             @Override
             public void end(World world) {
-
             }
         };
     }

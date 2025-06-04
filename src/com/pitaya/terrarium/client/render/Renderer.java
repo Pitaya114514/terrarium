@@ -2,26 +2,26 @@ package com.pitaya.terrarium.client.render;
 
 import com.pitaya.terrarium.Main;
 import com.pitaya.terrarium.client.GameLoader;
-import com.pitaya.terrarium.client.TerrariumClient;
+import com.pitaya.terrarium.client.render.hud.BossHealthBar;
+import com.pitaya.terrarium.client.render.hud.CharBar;
+import com.pitaya.terrarium.client.render.hud.Hud;
 import com.pitaya.terrarium.client.render.resources.ResourceLoadingException;
 import com.pitaya.terrarium.client.render.resources.ResourcePack;
 import com.pitaya.terrarium.client.render.resources.Sound;
+import com.pitaya.terrarium.game.LocalTerrarium;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.life.LivingEntity;
 import com.pitaya.terrarium.game.entity.life.player.PlayerMoveController;
 import com.pitaya.terrarium.game.entity.life.mob.boss.BossEntity;
-import com.pitaya.terrarium.game.item.Item;
 import com.pitaya.terrarium.game.util.Counter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joml.Vector2f;
-import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.ALC;
 import org.lwjgl.opengl.GL;
 
 import java.io.IOException;
-import java.util.concurrent.ThreadLocalRandom;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.openal.AL10.alSourcePlay;
@@ -39,17 +39,21 @@ public final class Renderer {
     private Camara camara;
     private Hud hud;
     private long window;
-    private long monitor;
     private Thread renderThread;
     private LivingEntity targetEntity;
-    private boolean isRunning;
 
+    //用于update()的缓存字段
+    private final float[] rgb = new float[3];
+    private final double[] xpos = new double[1];
+    private final double[] ypos = new double[1];
     private final Vector2f cursorPos = new Vector2f();
     private final Vector2f windowSize = new Vector2f();
     private final Vector2f tlPos = new Vector2f();
     private final Vector2f blPos = new Vector2f();
     private final Vector2f brPos = new Vector2f();
     private final Vector2f trPos = new Vector2f();
+    private final Vector2f groundPos1 = new Vector2f(Integer.MIN_VALUE, 0);
+    private final Vector2f groundPos2 = new Vector2f(Integer.MAX_VALUE, 0);
 
     public void load() {
         Runnable renderFunction = () -> {
@@ -57,7 +61,6 @@ public final class Renderer {
             playSound(resourcePack.soundPack.roar_1);
             fpsCounter = new Counter();
             fpsCounter.schedule();
-            isRunning = true;
             while (!glfwWindowShouldClose(window)) {
                 update();
                 fpsCounter.addCount();
@@ -65,18 +68,17 @@ public final class Renderer {
                 glfwSwapBuffers(window);
             }
             fpsCounter.cancel();
-            isRunning = false;
             closeWindow();
             try {
-                GameLoader gameLoader = Main.getClient().gameLoader;
-                gameLoader.savePlayer(gameLoader.exportPlayer(Main.getClient().player));
-                LOGGER.info("Player data has been saved: {}", Main.getClient().player.entity().name);
-                gameLoader.saveWorld(Main.getClient().terrarium.exportWorldData());
-                LOGGER.info("World data has been saved: {}", Main.getClient().terrarium.getWorldName());
+                GameLoader.savePlayer(GameLoader.exportPlayer(Main.getClient().player));
+                LOGGER.info("Player data has been saved: {}", Main.getClient().player.entity().getName());
+                if (Main.getClient().getTerrarium() instanceof LocalTerrarium lTerrarium) {
+                    GameLoader.saveWorld(GameLoader.exportWorld(lTerrarium.getWorldInfo()));
+                    LOGGER.info("World data has been saved: {}", lTerrarium.getWorldName());
+                }
             } catch (IOException e) {
                 LOGGER.error(e);
             }
-            Main.getClient().terminateTerrarium();
         };
         if (renderThread == null || renderThread.getState() == Thread.State.TERMINATED) {
             renderThread = new Thread(renderFunction);
@@ -90,15 +92,19 @@ public final class Renderer {
 
     private void update() {
         if (isInDebugMode) {
-            glfwSetWindowTitle(window, String.format("Terrarium | fps=%s | tps=%s", getFps(), Main.getClient().terrarium.getTps()));
+            glfwSetWindowTitle(window, String.format("Terrarium | fps=%s | tps=%s | entities=%s", getFps(), Main.getClient().getTerrarium().getTps(), Main.getClient().getTerrarium().getWorldInfo().getEntityList().size()));
         }
 
-        double[] xpos = new double[1];
-        double[] ypos = new double[1];
         glfwGetCursorPos(window, xpos, ypos);
         cursorPos.set(xpos[0], ypos[0]);
         Vector2f cursorPos2 = camara.getWorldPos(cursorPos);
         Main.getClient().player.cursorPos.set(cursorPos2);
+
+        int leftButtonState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+        if (leftButtonState == GLFW_PRESS) {
+            Main.getClient().getTerrarium().useItem(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
+        }
+
         if (shouldAutoAim && targetEntity != null) {
             Main.getClient().player.entity().targetPos.set(targetEntity.position);
         } else {
@@ -121,13 +127,10 @@ public final class Renderer {
             hud.render(Hud.HudItems.BOSS_HEALTH_BAR.getRenderModule(), windowSize);
         }
 
-        Vector2f pos1 = new Vector2f(Integer.MIN_VALUE, 0);
-        Vector2f pos2 = new Vector2f(Integer.MAX_VALUE, 0);
+        camara.render(groundPos1, groundPos2, null, null, GL_LINES, 0.6f, 1.0f, 0.8f);
 
-        camara.render(pos1, pos2, null, null, GL_LINES, 0.6f, 1.0f, 0.8f);
-
-        for (int i = 0; i < Main.getClient().terrarium.getEntityList().size(); i++) {
-            Entity entity = Main.getClient().terrarium.getEntityList().get(i);
+        for (int i = 0; i < Main.getClient().getTerrarium().getWorldInfo().getEntityList().size(); i++) {
+            Entity entity = Main.getClient().getTerrarium().getWorldInfo().getEntityList().get(i);
 
             if (entity instanceof LivingEntity livingEntity && livingEntity.healthManager.isWounded) {
                 playSound(resourcePack.soundPack.hit_1);
@@ -144,7 +147,6 @@ public final class Renderer {
                 ((BossHealthBar) Hud.HudItems.BOSS_HEALTH_BAR.getRenderModule()).setTargetEntity((LivingEntity) entity);
             }
 
-            float[] rgb = new float[3];
             if (entity instanceof LivingEntity livingEntity && livingEntity.healthManager.isInvincible) {
                 rgb[0] = 0.4f;
                 rgb[1] = 0.5f;
@@ -166,6 +168,8 @@ public final class Renderer {
     private void init() {
         initGl();
         initAl();
+        isInDebugMode = Boolean.parseBoolean(Main.getClient().properties.getProperty("debug-mode"));
+        shouldAutoAim = Boolean.parseBoolean(Main.getClient().properties.getProperty("auto-aim"));
         try {
             resourcePack = new ResourcePack("res/terrarium_resource_pack");
         } catch (ResourceLoadingException e) {
@@ -181,24 +185,14 @@ public final class Renderer {
             glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
             glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
         }
-        isInDebugMode = Boolean.parseBoolean(Main.getClient().properties.getProperty("debug-mode"));
-        shouldAutoAim = Boolean.parseBoolean(Main.getClient().properties.getProperty("auto-aim"));
         int width = Integer.parseInt(Main.getClient().properties.getProperty("game-width"));
         int height = Integer.parseInt(Main.getClient().properties.getProperty("game-height"));
         String title = isInDebugMode ? "Terrarium" :
-                TerrariumClient.TITLE_LIST.get(ThreadLocalRandom.current().nextInt(TerrariumClient.TITLE_LIST.size()));
+                "TERRARIUM";
         window = glfwCreateWindow(width, height, title, NULL, NULL);
-        monitor = glfwGetPrimaryMonitor();
         if (window == NULL) {
             throw new IllegalStateException("Unable to create game window");
         }
-        glfwSetMouseButtonCallback(window, (window1, button, action, mods) -> {
-            if (action != GLFW_RELEASE) {
-                if (button == GLFW_MOUSE_BUTTON_LEFT) {
-                    Main.getClient().terrarium.useItem(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
-                }
-            }
-        });
         glfwSetKeyCallback(window, (window1, key, scancode, action, mods) -> {
             switch (key) {
                 case GLFW_KEY_A -> Main.getClient().player.isMovingToLeft = action != GLFW_RELEASE && !Main.getClient().player.isMovingToRight;
@@ -219,7 +213,7 @@ public final class Renderer {
 
                 case GLFW_KEY_SPACE -> {
                     if (action != GLFW_RELEASE) {
-                        Main.getClient().player.entity().moveController.jump(200);
+                        Main.getClient().player.entity().moveController.jump(200, Main.getClient().getTerrarium().getWorldInfo().getGravity());
                     }
                 }
 
@@ -229,26 +223,22 @@ public final class Renderer {
                     }
                 }
 
-                case GLFW_KEY_F12 -> {
-                    if (action == GLFW_PRESS) {
-                        if (glfwGetWindowMonitor(window) == 0) {
-                            GLFWVidMode glfwVidMode = glfwGetVideoMode(monitor);
-                            int width1 = glfwVidMode.width();
-                            int height1 = glfwVidMode.height();
-                            glfwSetWindowMonitor(window, monitor, 0, 0, width1, height1, glfwVidMode.refreshRate());
-                            reload(width1, height1);
-                        } else {
-                            glfwSetWindowMonitor(window, 0, 100, 100, 800, 600, 0);
-                        }
-                    }
-                }
-
                 case GLFW_KEY_ENTER -> {
                     if (action != GLFW_RELEASE) {
                         CharBar charBar = (CharBar) Hud.HudItems.CHAT_BAR.getRenderModule();
                         if (charBar.isEnable() && !charBar.toString().isEmpty()) {
-                            Main.getClient().terrarium.sendMassage(charBar.toString());
+                            Main.getClient().getTerrarium().sendMassage(charBar.toString());
                             charBar.clear();
+                        }
+                        charBar.setEnable(!charBar.isEnable());
+                    }
+                }
+
+                case GLFW_KEY_GRAVE_ACCENT -> {
+                    if (action != GLFW_RELEASE) {
+                        CharBar charBar = (CharBar) Hud.HudItems.CHAT_BAR.getRenderModule();
+                        if (charBar.isEnable() && !charBar.toString().isEmpty()) {
+                            Main.getClient().getTerrarium().sendMassage(charBar.toString());
                         }
                         charBar.setEnable(!charBar.isEnable());
                     }
@@ -275,13 +265,6 @@ public final class Renderer {
                     case GLFW_KEY_8 -> Main.getClient().player.backpackIndex = 7;
 
                     case GLFW_KEY_9 -> Main.getClient().player.backpackIndex = 8;
-
-                    case GLFW_KEY_0 -> {
-                        Item item = Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex);
-                        if (item != null) {
-                            LOGGER.info(item.name);
-                        }
-                    }
                 }
             }
         });
@@ -337,10 +320,6 @@ public final class Renderer {
             return 0;
         }
         return fpsCounter.getValue();
-    }
-
-    public boolean isRunning() {
-        return isRunning;
     }
 
     public void closeWindow() {

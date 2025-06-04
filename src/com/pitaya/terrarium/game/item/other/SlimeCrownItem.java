@@ -7,7 +7,7 @@ import com.pitaya.terrarium.game.World;
 
 public class SlimeCrownItem extends Item {
     public SlimeCrownItem() {
-        super("SlimeCrown");
+        super("SlimeCrown", 20);
     }
 
     @Override

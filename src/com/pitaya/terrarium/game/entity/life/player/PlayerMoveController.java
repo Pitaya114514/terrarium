@@ -6,7 +6,7 @@ public class PlayerMoveController extends MoveController {
     public boolean isPressingW;
     public boolean isPressingS;
 
-    protected PlayerMoveController(boolean floatable) {
-        super(floatable);
+    protected PlayerMoveController() {
+        super(false);
     }
 }

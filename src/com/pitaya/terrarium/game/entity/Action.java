@@ -4,12 +4,12 @@ import com.pitaya.terrarium.game.World;
 import org.joml.Vector2f;
 
 public abstract class Action {
-    protected Vector2f position;
+    protected Entity entity;
     private Vector2f targetPos;
     private Entity targetEntity;
 
-    public Action(Vector2f position) {
-        this.position = position;
+    public Action(Entity entity) {
+        this.entity = entity;
     }
 
     public abstract void start(World world);

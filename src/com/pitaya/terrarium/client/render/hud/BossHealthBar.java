@@ -1,5 +1,6 @@
-package com.pitaya.terrarium.client.render;
+package com.pitaya.terrarium.client.render.hud;
 
+import com.pitaya.terrarium.client.render.RenderModule;
 import com.pitaya.terrarium.game.entity.life.LivingEntity;
 import org.joml.Vector2f;
 import org.lwjgl.opengl.GL33;

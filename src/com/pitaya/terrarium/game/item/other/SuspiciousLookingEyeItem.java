@@ -7,7 +7,7 @@ import com.pitaya.terrarium.game.World;
 
 public class SuspiciousLookingEyeItem extends Item {
     public SuspiciousLookingEyeItem() {
-        super("SuspiciousLookingEye");
+        super("SuspiciousLookingEye", 20);
     }
 
     @Override

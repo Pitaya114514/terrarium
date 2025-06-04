@@ -3,8 +3,6 @@ package com.pitaya.terrarium;
 import com.pitaya.terrarium.client.TerrariumClient;
 import com.pitaya.terrarium.server.TerrariumServer;
 
-import java.util.Objects;
-
 public final class Main {
     private static TerrariumClient client;
     private static TerrariumServer server;

@@ -9,9 +9,11 @@ public abstract class Item {
     public final String name;
     protected ItemEntity entity;
     protected PlayerEntity owner;
+    protected int usingTime;
 
-    public Item(String name) {
+    public Item(String name, int usingTime) {
         this.name = name;
+        this.usingTime = usingTime > 0 ? usingTime : 1;
     }
 
     public void setOwner(PlayerEntity owner) {
@@ -21,10 +23,11 @@ public abstract class Item {
     protected abstract void useFuc(World world);
 
     public void use(World world) {
-        if (owner == null) {
+        if (owner == null || owner.getUsingCd() > 0) {
             return;
         }
         useFuc(world);
+        owner.setUsingCd(usingTime);
     }
 
     public void thrown(World world) {

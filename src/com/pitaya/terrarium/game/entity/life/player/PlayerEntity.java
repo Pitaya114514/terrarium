@@ -5,20 +5,21 @@ import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.life.LivingEntity;
 import com.pitaya.terrarium.game.item.Backpack;
 import com.pitaya.terrarium.game.item.other.*;
-import com.pitaya.terrarium.game.item.weapon.BoomstickItem;
+import com.pitaya.terrarium.game.item.weapon.SDMGItem;
 import org.joml.Vector2f;
 
 public class PlayerEntity extends LivingEntity {
     private PlayerDifficulty difficulty;
+    private int usingCd;
     private final Backpack backpack = new Backpack(this, 30);
     public final Vector2f targetPos = new Vector2f();
 
     public PlayerEntity(String name, Vector2f position, PlayerDifficulty difficulty) {
-        super(name, new Box( 20, 30, 0, false), new PlayerMoveController(false), position, 400, 0, 50);
+        super(name, new Box( 20, 30, 0), new PlayerMoveController(), position, 400, 0, 50, EntityGroups.PLAYER);
         this.difficulty = difficulty == null ? PlayerDifficulty.CLASSIC : difficulty;
         backpack.addItem(new SlimeCrownItem());
         backpack.addItem(new SuspiciousLookingEyeItem());
-        backpack.addItem(new BoomstickItem());
+        backpack.addItem(new SDMGItem());
     }
 
     public Backpack getBackpack() {
@@ -40,5 +41,21 @@ public class PlayerEntity extends LivingEntity {
 
     public void setDifficulty(PlayerDifficulty difficulty) {
         this.difficulty = difficulty;
+    }
+
+    public int getUsingCd() {
+        return usingCd;
+    }
+
+    public void reduceUsingCd() {
+        if (usingCd > 0) {
+            usingCd--;
+        }
+    }
+
+    public void setUsingCd(int usingCd) {
+        if (usingCd >= 0) {
+            this.usingCd = usingCd;
+        }
     }
 }

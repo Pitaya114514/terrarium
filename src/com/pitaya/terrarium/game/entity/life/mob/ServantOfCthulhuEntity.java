@@ -4,16 +4,18 @@ import com.pitaya.terrarium.game.entity.Action;
 import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.MoveController;
-import com.pitaya.terrarium.game.entity.life.mob.boss.EyeOfCthulhuEntity;
 import com.pitaya.terrarium.game.util.PosUtil;
 import com.pitaya.terrarium.game.World;
+import com.pitaya.terrarium.game.util.Velocity;
 import org.joml.Vector2f;
 
 public class ServantOfCthulhuEntity extends MobEntity {
 
     public ServantOfCthulhuEntity(Vector2f position, Entity target) {
-        super("Servant of Cthulhu", new Box(10, 5, 34, true), new MoveController(true), position, 15, 0, 5);
-        action = new Action(this.position) {
+        super("Servant of Cthulhu", new Box(10, 5, 34), new MoveController(true), position, 15, 0, 5);
+        action = new Action(this) {
+            private Velocity velocity = new Velocity(2.5f);
+
             @Override
             public void start(World world) {
                 setTargetEntity(target);
@@ -22,12 +24,10 @@ public class ServantOfCthulhuEntity extends MobEntity {
             @Override
             public void act(World world) {
                 if (target != null) {
-                    float slope = PosUtil.getSlope(this.position, getTargetPos());
-                    boolean direction = PosUtil.getDirection(this.position, getTargetPos());
-                    float maxSpeed = 2.5f;
-                    PosUtil.movePos(this.position, direction, slope, maxSpeed);
+                    velocity.radians = PosUtil.getRadians(position, getTargetPos());
+                    PosUtil.movePos(entity.position, velocity);
                 } else {
-                    world.removeEntity(ServantOfCthulhuEntity.this);
+                    world.killEntity(ServantOfCthulhuEntity.this);
                 }
             }
 
@@ -36,14 +36,5 @@ public class ServantOfCthulhuEntity extends MobEntity {
 
             }
         };
-    }
-
-    @Override
-    public boolean damage(Entity source, double value) {
-        if (source instanceof EyeOfCthulhuEntity) {
-            return false;
-        }
-        super.damage(source, value);
-        return true;
     }
 }

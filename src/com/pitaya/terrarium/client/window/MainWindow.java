@@ -1,20 +1,11 @@
 package com.pitaya.terrarium.client.window;
 
-import com.pitaya.terrarium.Main;
-import com.pitaya.terrarium.client.Player;
-import com.pitaya.terrarium.game.World;
-import org.apache.logging.log4j.spi.NoOpThreadContextMap;
-
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 
 public class MainWindow extends JFrame {
     private OptionWindow optionWindow;
-    private ConnectWindow connectWindow;
     private SingleplayerWindow singleplayerWindow;
+    private MultiplayerWindow multiplayerWindow;
 
     public MainWindow() {
         super("Terrarium");
@@ -41,9 +32,9 @@ public class MainWindow extends JFrame {
         });
         JMenuItem menuItem2 = new JMenuItem("多人游戏");
         menuItem2.addActionListener(e -> {
-            if (connectWindow == null || !connectWindow.isVisible()) {
-                connectWindow = new ConnectWindow(this);
-                connectWindow.setVisible(true);
+            if (multiplayerWindow == null || !multiplayerWindow.isVisible()) {
+                multiplayerWindow = new MultiplayerWindow(this);
+                multiplayerWindow.setVisible(true);
             }
         });
         JMenuItem menuItem3 = new JMenuItem("设置");

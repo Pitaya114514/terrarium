@@ -15,8 +15,8 @@ import org.apache.logging.log4j.Logger;
 import org.joml.Vector2f;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -31,6 +31,8 @@ public class World implements Runnable {
     public final List<Entity> entityList = new ArrayList<>();
     public final List<Vector2f> centerPosList = new ArrayList<>();
     public final Chatroom chatroom;
+    private final WorldInfo info = new WorldInfo();
+
     private Counter tpsCounter;
 
     private final List<WorldListener> tickEventListeners = new ArrayList<>();
@@ -46,7 +48,7 @@ public class World implements Runnable {
         this.chatroom = new Chatroom();
         chatroom.addListener(event -> {
             List<String> messageList = ((Chatroom) event.getSource()).getMessageList();
-            String message = messageList.getLast();
+            String message = messageList.get(messageList.size() - 1);
             LOGGER.info("{} -> {}", date.toString(), message);
         });
     }
@@ -78,7 +80,8 @@ public class World implements Runnable {
 
     private void update() {
         date.addTime();
-        for (Entity entity : entityList) {
+        for (int i = 0; i < entityList.size(); i++) {
+            Entity entity = entityList.get(i);
             for (Vector2f centerPos : centerPosList) {
                 if (entity instanceof LivingEntity && centerPos.distance(entity.position) > 3100) {
                     removeEntity(entity);
@@ -92,9 +95,15 @@ public class World implements Runnable {
                         if (player.getDifficulty() == PlayerDifficulty.MEDIUMCORE) {
                             player.getBackpack().clear();
                         }
+                        chatroom.sendMessage(String.format("%s看着自己的内脏变成了外脏，凶手是%s。", entity.getName(), player.healthManager.getAttacker().getName()));
                         player.respawn();
                     } else {
-                        removeEntity(entity);
+                        killEntity(entity);
+                    }
+                }
+                for (Entity attacker : entityList) {
+                    if (livingEntity != attacker && attacker.box.damage > 0 && entity.box.isIntersected(attacker.box)) {
+                        attacker.attack(livingEntity, attacker.box.damage);
                     }
                 }
             }
@@ -104,6 +113,9 @@ public class World implements Runnable {
             Entity entity = entityList.get(i);
             entity.addTime();
             if (entity instanceof LivingEntity livingEntity) {
+                if (livingEntity instanceof PlayerEntity player) {
+                    player.reduceUsingCd();
+                }
                 HealthManager hm = livingEntity.healthManager;
                 if (hm.invincibilityCD > 0) {
                     hm.invincibilityCD--;
@@ -135,14 +147,8 @@ public class World implements Runnable {
                 }
             }
             entity.getAction().act(this);
-            if (entity instanceof LivingEntity target) {
-                for (Entity attacker : entityList) {
-                    if (target != attacker && attacker.box.damage > 0 && entity.box.isIntersected(attacker.box)) {
-                        attacker.attack(target, attacker.box.damage);
-                    }
-                }
-            }
         }
+
         for (WorldListener listener : tickEventListeners) {
             listener.trigger(new WorldEvent(this));
         }
@@ -154,7 +160,7 @@ public class World implements Runnable {
                     return true;
                 }
             });
-        } catch (ConcurrentModificationException e) {
+        } catch (ConcurrentModificationException | NullPointerException e) {
             LOGGER.warn("Skip an event", e);
         }
     }
@@ -165,35 +171,43 @@ public class World implements Runnable {
         entity.setAlive(true);
         entity.getAction().start(this);
         if (entity instanceof BossEntity) {
-            chatroom.sendMessage(String.format("%s已苏醒！", entity.name));
+            chatroom.sendMessage(String.format("%s已苏醒！", entity.getName()));
         } else if (entity instanceof PlayerEntity) {
-            chatroom.sendMessage(String.format("%s已加入。", entity.name));
+            chatroom.sendMessage(String.format("%s已加入。", entity.getName()));
             centerPosList.add(entity.position);
         }
     }
 
-    public void removeEntity(Entity entity) {
+    private void removeEntity(Entity entity) {
+        disposableTickEventListeners.add(e -> {
+            entityList.remove(entity);
+        });
+    }
+
+    public void killEntity(Entity entity) {
         disposableTickEventListeners.add(e -> {
             entity.getAction().end(this);
             boolean removed = entityList.remove(entity);
             if (removed) {
                 entity.setAlive(false);
                 if (entity instanceof BossEntity boss && boss.getHealth() <= 0) {
-                    chatroom.sendMessage(String.format("%s已被打败！", entity.name));
+                    chatroom.sendMessage(String.format("%s已被打败！", entity.getName()));
+                } else if (entity instanceof PlayerEntity player) {
+                    chatroom.sendMessage(String.format("%s看着自己的内脏变成了外脏，凶手是%s。", entity.getName(), player.healthManager.getAttacker().getName()));
                 }
             }
         });
     }
 
-    public void pause() {
-        paused = true;
-    }
-
-    public void resume() {
-        synchronized (pauseLock) {
-            paused = false;
-            pauseLock.notifyAll();
-        }
+    public WorldInfo getInfo() {
+        info.setName(name);
+        info.setGravity(gravity);
+        info.setDifficulty(difficulty);
+        info.setDaytime(date.isDaytime());
+        info.setDays(date.getDays());
+        info.setTime(date.getTime());
+        info.setEntityList(Collections.unmodifiableList(entityList));
+        return info;
     }
 
     public void stop() {

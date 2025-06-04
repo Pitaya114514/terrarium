@@ -8,7 +8,7 @@ import org.joml.Vector2f;
 public abstract class BarrageEntity extends Entity {
     public int penetration;
 
-    public BarrageEntity(String name, Box box, MoveController moveController, Vector2f position) {
-        super(name, box, moveController, position);
+    public BarrageEntity(String name, Box box, MoveController moveController, Vector2f position, EntityGroups group) {
+        super(name, box, moveController, position, group);
     }
 }

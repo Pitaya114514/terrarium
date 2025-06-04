@@ -4,148 +4,89 @@ import com.pitaya.terrarium.game.entity.Action;
 import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.MoveController;
-import com.pitaya.terrarium.game.entity.life.mob.ServantOfCthulhuEntity;
 import com.pitaya.terrarium.game.util.PosUtil;
 import com.pitaya.terrarium.game.World;
+import com.pitaya.terrarium.game.util.Velocity;
 import org.joml.Vector2f;
 
 public class EyeOfCthulhuEntity extends BossEntity {
 
     public EyeOfCthulhuEntity(Vector2f position, Entity target) {
-        super("Eye of Cthulhu", new Box(100, 100, 45, true), new MoveController(true), position, 4641, 12, 5);
-        action = new Action(this.position) {
+        super("Eye of Cthulhu", new Box(100, 100, 45), new MoveController(true), position, 4641, 12, 5);
+        action = new Action(this) {
+            private Velocity velocity;
             private Vector2f targetPos;
 
             enum Action {
                 FIRST_CHASING, FIRST_CRASHING, INVERTING, SECOND_CHASING, SECOND_CRASHING
             }
 
-            private Action actionState;
-            private int cd;
-            private int invertCd;
-            private int servantCd;
-            private int crashCd;
-            private int crashCount;
-            private float cSlope;
-            private boolean cDirection;
-            private float slope;
-            private boolean direction;
-            private boolean isEnraged;
-            private boolean si;
+            private Action actionState = Action.FIRST_CHASING;
+
+            private final Vector2f chasingTarget = new Vector2f();
+            private int chasingCd;
+
+            private int crashingCount;
+            private int crashingCd;
+            private int crashingTime;
+            private final Velocity crashingVelocity = new Velocity();
+            private final Vector2f crashingTarget = new Vector2f();
 
             @Override
             public void start(World world) {
                 setTargetEntity(target);
                 targetPos = getTargetEntity().position;
-                slope = PosUtil.getSlope(position, targetPos);
-                direction = PosUtil.getDirection(position, targetPos);
+                velocity = new Velocity();
             }
 
             @Override
             public void act(World world) {
-                if (!isEnraged && getHealth() / defaultHealth <= 0.64) {
-                    isEnraged = true;
-                    actionState = Action.INVERTING;
-                    cd = 0;
-                    servantCd = 0;
-                    crashCount = 0;
-                    crashCd = 0;
+                chasingCd++;
+                if (chasingCd == 150) {
+                    crashingTime = 49;
+                    actionState = Action.FIRST_CRASHING;
                 }
-                if (!isEnraged) {
+                if (crashingCount >= 4) {
+                    velocity.speed = 0;
+                    chasingCd = 0;
+                    crashingCd = 0;
+                    crashingCount = 0;
                     actionState = Action.FIRST_CHASING;
-                    cd++;
-                    if (cd >= 130) {
-                        actionState = Action.FIRST_CRASHING;
-                    }
-                    if (crashCount >= 3) {
-                        crashCount = 0;
-                        cd = 0;
-                        actionState = Action.FIRST_CHASING;
-                    }
-                } else {
-                    if (actionState == Action.INVERTING) {
-                        invertCd++;
-                        if (invertCd >= 240) {
-                            invertCd = 0;
-                            box.damage = 54;
-                            setDefense(-3);
-                            actionState = Action.SECOND_CHASING;
+                }
+
+                switch (actionState) {
+                    case FIRST_CHASING -> {
+                        chasingTarget.set(getTargetPos().x, getTargetPos().y + 94);
+                        velocity.radians = PosUtil.getRadians(entity.position, chasingTarget);
+                        float distance = entity.position.distance(chasingTarget);
+                        if (velocity.speed <= 2.78f) {
+                            velocity.speed += 0.19f;
                         }
+                        if (velocity.speed > distance) {
+                            velocity.speed = distance;
+                        }
+                        PosUtil.movePos(entity.position, velocity);
                     }
-                    cd++;
-                    if (cd >= 130) {
-                        actionState = Action.SECOND_CRASHING;
-                    }
-                    if (crashCount >= 6) {
-                        crashCount = 0;
-                        cd = 0;
-                        actionState = Action.SECOND_CHASING;
+                    case FIRST_CRASHING -> {
+                        crashingTime++;
+                        int maxTime = 50;
+                        if (crashingTime == maxTime) {
+                            crashingTarget.set(getTargetPos());
+                            crashingVelocity.radians = PosUtil.getRadians(entity.position, crashingTarget);
+                            crashingVelocity.speed = 6.6f;
+                            crashingCount++;
+                        } else if (crashingTime > maxTime) {
+                            PosUtil.movePos(entity.position, crashingVelocity);
+                            if (crashingTime > maxTime + 15) {
+                                crashingVelocity.speed -= 0.8f;
+                            }
+                            if (crashingVelocity.speed <= 0) {
+                                crashingTime = 0;
+                            }
+                        }
                     }
                 }
 
-                float maxSpeed;
-                final Vector2f crashPos = new Vector2f();
-                switch (actionState) {
-                    case FIRST_CHASING -> {
-                        servantCd++;
-                        if (servantCd == 21) {
-                            servantCd = 0;
-                            world.addEntity(new ServantOfCthulhuEntity(this.position, target));
-                        }
-                        slope = PosUtil.getSlope(this.position, targetPos);
-                        direction = PosUtil.getDirection(this.position, targetPos);
-                        maxSpeed = 1;
-                        PosUtil.movePos(this.position, direction, slope, maxSpeed);
-                    }
-                    case FIRST_CRASHING -> {
-                        maxSpeed = 3;
-                        crashCd++;
-                        if (crashCd == 1) {
-                            crashPos.set(targetPos);
-                            cSlope = PosUtil.getSlope(this.position, crashPos);
-                            cDirection = PosUtil.getDirection(this.position, crashPos);
-                        }
-                        if (crashCd > 1) {
-                            PosUtil.movePos(this.position, cDirection, cSlope, maxSpeed);
-                        }
-                        if (crashCd > 100) {
-                            crashCd = 0;
-                            crashCount++;
-                        }
-                    }
-                    case INVERTING -> {
-                        if (!si) {
-                            Vector2f v = new Vector2f();
-                            world.addEntity(new ServantOfCthulhuEntity(v.set(this.position).add(0, -60), target));
-                            world.addEntity(new ServantOfCthulhuEntity(v.set(this.position).add(0, 60), target));
-                            world.addEntity(new ServantOfCthulhuEntity(v.set(this.position).add(60, 0), target));
-                            world.addEntity(new ServantOfCthulhuEntity(v.set(this.position).add(-60, 0), target));
-                            si = true;
-                        }
-                    }
-                    case SECOND_CHASING -> {
-                        slope = PosUtil.getSlope(this.position, targetPos);
-                        direction = PosUtil.getDirection(this.position, targetPos);
-                        maxSpeed = 3.5f;
-                        PosUtil.movePos(this.position, direction, slope, maxSpeed);
-                    }
-                    case SECOND_CRASHING -> {
-                        maxSpeed = 10;
-                        crashCd++;
-                        if (crashCd == 1) {
-                            crashPos.set(targetPos);
-                            cSlope = PosUtil.getSlope(this.position, crashPos);
-                            cDirection = PosUtil.getDirection(this.position, crashPos);
-                        }
-                        if (crashCd > 1) {
-                            PosUtil.movePos(this.position, cDirection, cSlope, maxSpeed);
-                        }
-                        if (crashCd > 10) {
-                            crashCd = 0;
-                            crashCount++;
-                        }
-                    }
-                }
             }
 
             @Override
@@ -153,14 +94,5 @@ public class EyeOfCthulhuEntity extends BossEntity {
 
             }
         };
-    }
-
-    @Override
-    public boolean damage(Entity source, double value) {
-        if (source instanceof ServantOfCthulhuEntity) {
-            return false;
-        }
-        super.damage(source, value);
-        return true;
     }
 }

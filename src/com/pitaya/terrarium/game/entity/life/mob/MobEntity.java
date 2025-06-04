@@ -7,6 +7,6 @@ import org.joml.Vector2f;
 
 public abstract class MobEntity extends LivingEntity {
     public MobEntity(String name, Box box, MoveController moveController, Vector2f position, double defaultHealth, double defense, int invincibilityFrame) {
-        super(name, box, moveController, position, defaultHealth, defense, invincibilityFrame);
+        super(name, box, moveController, position, defaultHealth, defense, invincibilityFrame, EntityGroups.MOB);
     }
 }

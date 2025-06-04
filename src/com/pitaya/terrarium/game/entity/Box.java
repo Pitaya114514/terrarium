@@ -4,16 +4,14 @@ import org.joml.Vector2f;
 
 public class Box {
     public double damage;
-    public boolean isDangerous;
     public Vector2f center;
     private float width;
     private float height;
 
-    public Box(float width, float height, double damage, boolean isDangerous) {
+    public Box(float width, float height, double damage) {
         setWidth(width);
         setHeight(height);
         this.damage = damage;
-        this.isDangerous = isDangerous;
         this.center = new Vector2f();
     }
 

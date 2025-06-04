@@ -5,19 +5,18 @@ import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.MoveController;
 import com.pitaya.terrarium.game.util.PosUtil;
 import com.pitaya.terrarium.game.World;
+import com.pitaya.terrarium.game.util.Velocity;
 import org.joml.Vector2f;
 
 public class Bullet extends BarrageEntity {
-    public class BulletAction extends Action {
+    public static class BulletAction extends Action {
         protected float speed;
-        protected float slope;
-        private boolean direction;
+        protected Velocity velocity;
 
-        public BulletAction(Vector2f position, Vector2f targetPos, float speed) {
-            super(position);
+        public BulletAction(BarrageEntity entity, Vector2f targetPos, float speed) {
+            super(entity);
             this.speed = speed;
-            direction = PosUtil.getDirection(position, targetPos);
-            slope = PosUtil.getSlope(position, targetPos);
+            velocity = new Velocity(this.speed, PosUtil.getRadians(entity.position, targetPos));
         }
 
         @Override
@@ -27,10 +26,10 @@ public class Bullet extends BarrageEntity {
 
         @Override
         public void act(World world) {
-            if (penetration > 1) {
-                world.removeEntity(Bullet.this);
+            if (((BarrageEntity) entity).penetration > 1) {
+                world.killEntity(entity);
             }
-            PosUtil.movePos(position, direction, slope, speed);
+            PosUtil.movePos(entity.position, velocity);
         }
 
         @Override
@@ -39,8 +38,8 @@ public class Bullet extends BarrageEntity {
         }
     }
 
-    public Bullet(Vector2f position, Vector2f targetPos, float speed) {
-        super("Bullet", new Box(3, 3, 21, false), new MoveController(true), position);
-        action = new BulletAction(this.position, targetPos, speed);
+    public Bullet(Vector2f position, Vector2f targetPos, float speed, EntityGroups group) {
+        super("Bullet", new Box(3, 3, 120), new MoveController(true), position, group);
+        action = new BulletAction(this, targetPos, speed);
     }
 }

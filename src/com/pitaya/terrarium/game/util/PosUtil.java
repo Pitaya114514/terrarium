@@ -5,15 +5,10 @@ import org.joml.Vector2f;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class PosUtil {
+    public static double HALF_OF_PI = Math.PI / 2;
+
     private PosUtil() {
-    }
 
-    public static float getSlope(Vector2f yourPos, Vector2f destination) {
-        return (destination.y() - yourPos.y()) / (destination.x() - yourPos.x());
-    }
-
-    public static boolean getDirection(Vector2f yourPos, Vector2f destination) {
-        return destination.x > yourPos.x;
     }
 
     public static Vector2f getRandomPos(Vector2f yourPos, float range) {
@@ -22,21 +17,21 @@ public final class PosUtil {
         return new Vector2f(x, y);
     }
 
-    public static void movePos(Vector2f yourPos, boolean direction, float slope, float speed) {
-        if (Float.isNaN(slope)) {
-            return;
-        }
-        float x, y;
-        if (Float.isInfinite(slope)) {
-            x = 0;
-            y = speed;
-            y = slope > 0 ? y : -y;
+    public static void movePos(Vector2f yourPos, Velocity velocity) {
+        float slope = (float) Math.tan(velocity.radians);
+        float x = (float) (velocity.speed / Math.sqrt(slope * slope + 1));
+        float y = slope * x;
+        if (velocity.radians >= -HALF_OF_PI && velocity.radians <= HALF_OF_PI) {
+            yourPos.x += x;
+            yourPos.y += y;
         } else {
-            x = (float) (speed / Math.sqrt(slope * slope + 1));
-            x = direction ? x : -x;
-            y = slope * x;
+            yourPos.x -= x;
+            yourPos.y -= y;
         }
-        yourPos.x += x;
-        yourPos.y += y;
+
+    }
+
+    public static double getRadians(Vector2f yourPos, Vector2f targetPos) {
+        return Math.atan2(targetPos.y - yourPos.y, targetPos.x - yourPos.x);
     }
 }

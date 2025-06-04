@@ -2,16 +2,19 @@ package com.pitaya.terrarium.client.render;
 
 import com.pitaya.terrarium.Main;
 import com.pitaya.terrarium.game.util.PosUtil;
+import com.pitaya.terrarium.game.util.Velocity;
 import org.joml.Vector2f;
 import org.lwjgl.opengl.GL33;
 
 public final class Camara {
+    private float speed = 3.0f;
     private Vector2f pos = new Vector2f();
     public final float aspectRatio = Float.parseFloat(Main.getClient().properties.getProperty("game-width")) /
             Float.parseFloat(Main.getClient().properties.getProperty("game-height"));
     private boolean isSmoothCamara = Boolean.parseBoolean(Main.getClient().properties.getProperty("smooth-camara"));
     private int width;
     private int height;
+    private final Velocity velocity = new Velocity(speed);
     private final Vector2f returnPos1 = new Vector2f();
     private final Vector2f returnPos2 = new Vector2f();
 
@@ -64,14 +67,13 @@ public final class Camara {
 
     public void setPos(Vector2f pos) {
         if (isSmoothCamara) {
-            boolean direction = PosUtil.getDirection(this.pos, pos);
-            float slope = PosUtil.getSlope(this.pos, pos);
+            velocity.speed = 3;
+            velocity.radians = PosUtil.getRadians(this.pos, pos);
             double distance = this.pos.distance(pos);
-            if (distance < 3.0f) {
-                PosUtil.movePos(this.pos, direction, slope, (float) distance);
-            } else {
-                PosUtil.movePos(this.pos, direction, slope, 3.0f);
+            if (distance < speed) {
+                velocity.speed = (float) distance;
             }
+            PosUtil.movePos(this.pos, velocity);
         } else {
             this.pos.set(pos);
         }

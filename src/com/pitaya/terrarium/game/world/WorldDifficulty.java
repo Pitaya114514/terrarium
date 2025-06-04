@@ -1,5 +1,11 @@
 package com.pitaya.terrarium.game.world;
 
 public enum WorldDifficulty {
-    CLASSIC, EXPERT, MASTER
+    CLASSIC(0), EXPERT(1), MASTER(2);
+
+    public final int code;
+
+    WorldDifficulty(int code) {
+        this.code = code;
+    }
 }

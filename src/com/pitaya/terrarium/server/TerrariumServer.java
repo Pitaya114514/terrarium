@@ -1,6 +1,8 @@
 package com.pitaya.terrarium.server;
 
+import com.pitaya.terrarium.game.LocalTerrarium;
 import com.pitaya.terrarium.game.Terrarium;
+import com.pitaya.terrarium.game.network.CommunicationException;
 import com.pitaya.terrarium.server.network.ServerCommunicator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,11 +14,13 @@ import java.util.Properties;
 
 public class TerrariumServer {
     private static final Logger LOGGER = LogManager.getLogger(TerrariumServer.class);
+    public static final String SERVER_VERSION = "b1.3.5-server";
     public final Properties properties;
-    public final Terrarium terrarium;
+    private Terrarium terrarium;
     public final ServerCommunicator communicator;
 
     public TerrariumServer() {
+        LOGGER.info("Terrarium | {}", SERVER_VERSION);
         this.properties = new Properties();
         properties.setProperty("server-port", "25565");
         properties.setProperty("server-ip", "127.0.0.1");
@@ -29,7 +33,7 @@ public class TerrariumServer {
                 LOGGER.warn("No properties! Properties will be generated");
                 outputProperties(name);
             } else {
-                LOGGER.error("e: ", e);
+                LOGGER.error("Properties loading failed:", e);
             }
         }
 
@@ -38,30 +42,35 @@ public class TerrariumServer {
         } catch (UnknownHostException | NumberFormatException e) {
             throw new RuntimeException(e);
         }
-        this.terrarium = new Terrarium();
         runTerrarium();
-        loadCommunicator();
     }
 
     public void runTerrarium() {
-        terrarium.startWorld();
-    }
-
-    public void loadCommunicator() {
-        communicator.load();
+        this.terrarium = new LocalTerrarium();
+        LocalTerrarium lTerrarium = (LocalTerrarium) this.terrarium;
+        lTerrarium.startWorld();
+        try {
+            communicator.load();
+        } catch (CommunicationException e) {
+            LOGGER.error("Unable to load server: ", e);
+        }
     }
 
     public void outputProperties(String name) {
         try (OutputStream output = new FileOutputStream(name)) {
             properties.store(output, "Terrarium Server Configs");
         } catch (IOException ex) {
-            LOGGER.error("ex: ", ex);
+            LOGGER.error("Properties generation failed: ", ex);
         }
         try (InputStream input = new FileInputStream(name)) {
             properties.load(input);
         } catch (IOException ex) {
-            LOGGER.error("ex: ", ex);
+            LOGGER.error("Properties loading failed: ", ex);
 
         }
+    }
+
+    public Terrarium getTerrarium() {
+        return terrarium;
     }
 }

@@ -21,6 +21,6 @@ public final class Player {
 
     @Override
     public String toString() {
-        return entity.name;
+        return entity.getName();
     }
 }
