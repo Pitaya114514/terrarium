@@ -9,6 +9,11 @@ import java.util.ArrayList;
 
 public class RemoteTerrarium implements Terrarium {
     @Override
+    public int executeCommand(String context) {
+        return 0;
+    }
+
+    @Override
     public void addEntity(Entity entity) {
 
     }
@@ -19,7 +24,7 @@ public class RemoteTerrarium implements Terrarium {
     }
 
     @Override
-    public void sendMassage(String message) {
+    public void sendMassage(Object sender, String message) {
 
     }
 

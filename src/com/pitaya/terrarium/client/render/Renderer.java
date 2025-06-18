@@ -2,31 +2,33 @@ package com.pitaya.terrarium.client.render;
 
 import com.pitaya.terrarium.Main;
 import com.pitaya.terrarium.client.GameLoader;
-import com.pitaya.terrarium.client.render.hud.BossHealthBar;
-import com.pitaya.terrarium.client.render.hud.CharBar;
-import com.pitaya.terrarium.client.render.hud.Hud;
 import com.pitaya.terrarium.client.render.resources.ResourceLoadingException;
 import com.pitaya.terrarium.client.render.resources.ResourcePack;
-import com.pitaya.terrarium.client.render.resources.Sound;
+import com.pitaya.terrarium.client.render.resources.SoundSource;
 import com.pitaya.terrarium.game.LocalTerrarium;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.life.LivingEntity;
 import com.pitaya.terrarium.game.entity.life.player.PlayerMoveController;
-import com.pitaya.terrarium.game.entity.life.mob.boss.BossEntity;
-import com.pitaya.terrarium.game.util.Counter;
+import com.pitaya.terrarium.game.util.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joml.Vector2f;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.ALC;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.stb.STBImage;
 
+import java.awt.*;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
+import static com.pitaya.terrarium.game.util.Util.Rendering.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.openal.AL10.alSourcePlay;
 import static org.lwjgl.openal.ALC10.*;
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL33.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public final class Renderer {
@@ -35,40 +37,44 @@ public final class Renderer {
     private ResourcePack resourcePack;
     private boolean isInDebugMode;
     private boolean shouldAutoAim;
-    private Counter fpsCounter = new Counter();
+    private Util.Counter fpsCounter = new Util.Counter();
     private Camara camara;
-    private Hud hud;
     private long window;
     private Thread renderThread;
     private LivingEntity targetEntity;
 
     //用于update()的缓存字段
-    private final float[] rgb = new float[3];
     private final double[] xpos = new double[1];
     private final double[] ypos = new double[1];
     private final Vector2f cursorPos = new Vector2f();
     private final Vector2f windowSize = new Vector2f();
-    private final Vector2f tlPos = new Vector2f();
-    private final Vector2f blPos = new Vector2f();
-    private final Vector2f brPos = new Vector2f();
-    private final Vector2f trPos = new Vector2f();
-    private final Vector2f groundPos1 = new Vector2f(Integer.MIN_VALUE, 0);
-    private final Vector2f groundPos2 = new Vector2f(Integer.MAX_VALUE, 0);
+
+    float[] sky = Util.Rendering.getVertices(
+            getVertex(-1.0f, 1.0f, new Color(3, 128, 190)),
+            getVertex(1.0f, 1.0f, new Color(3, 128, 190)),
+            getVertex(1.0f, -1.0f, new Color(240, 243, 241)),
+            getVertex(-1.0f, -1.0f, new Color(240, 243, 241)));
+    int[] skyi = {0, 1, 2, 3};
+    int skyVao;
+
+    int program;
+    int textureProgram;
+    int entityProgram;
+    private int width;
+    private int height;
 
     public void load() {
-        Runnable renderFunction = () -> {
+        Runnable r = () -> {
             init();
-            playSound(resourcePack.soundPack.roar_1);
-            fpsCounter = new Counter();
+            fpsCounter = new Util.Counter();
             fpsCounter.schedule();
             while (!glfwWindowShouldClose(window)) {
                 update();
                 fpsCounter.addCount();
-                glfwPollEvents();
-                glfwSwapBuffers(window);
             }
             fpsCounter.cancel();
             closeWindow();
+            resourcePack.free();
             try {
                 GameLoader.savePlayer(GameLoader.exportPlayer(Main.getClient().player));
                 LOGGER.info("Player data has been saved: {}", Main.getClient().player.entity().getName());
@@ -81,7 +87,7 @@ public final class Renderer {
             }
         };
         if (renderThread == null || renderThread.getState() == Thread.State.TERMINATED) {
-            renderThread = new Thread(renderFunction);
+            renderThread = new Thread(r);
             renderThread.setName("RenderThread");
             renderThread.setDaemon(true);
             renderThread.start();
@@ -90,103 +96,101 @@ public final class Renderer {
         }
     }
 
-    private void update() {
-        if (isInDebugMode) {
-            glfwSetWindowTitle(window, String.format("Terrarium | fps=%s | tps=%s | entities=%s", getFps(), Main.getClient().getTerrarium().getTps(), Main.getClient().getTerrarium().getWorldInfo().getEntityList().size()));
-        }
-
-        glfwGetCursorPos(window, xpos, ypos);
-        cursorPos.set(xpos[0], ypos[0]);
-        Vector2f cursorPos2 = camara.getWorldPos(cursorPos);
-        Main.getClient().player.cursorPos.set(cursorPos2);
-
-        int leftButtonState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-        if (leftButtonState == GLFW_PRESS) {
-            Main.getClient().getTerrarium().useItem(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
-        }
-
-        if (shouldAutoAim && targetEntity != null) {
-            Main.getClient().player.entity().targetPos.set(targetEntity.position);
-        } else {
-            Main.getClient().player.entity().targetPos.set(cursorPos2);
-        }
-
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        camara.setPos(Main.getClient().player.entity().position);
-        if (Main.getClient().player.isMovingToLeft) {
-            Main.getClient().player.entity().moveController.moveHorizontallyTo(false, 3);
-        }
-        if (Main.getClient().player.isMovingToRight) {
-            Main.getClient().player.entity().moveController.moveHorizontallyTo(true, 3);
-        }
-
-        if (hud.isEnable()) {
-            hud.render(Hud.HudItems.CHAT_BAR.getRenderModule(), windowSize);
-            hud.render(Hud.HudItems.PLAYER_HEALTH_BAR.getRenderModule(), windowSize);
-            hud.render(Hud.HudItems.BOSS_HEALTH_BAR.getRenderModule(), windowSize);
-        }
-
-        camara.render(groundPos1, groundPos2, null, null, GL_LINES, 0.6f, 1.0f, 0.8f);
-
-        for (int i = 0; i < Main.getClient().getTerrarium().getWorldInfo().getEntityList().size(); i++) {
-            Entity entity = Main.getClient().getTerrarium().getWorldInfo().getEntityList().get(i);
-
-            if (entity instanceof LivingEntity livingEntity && livingEntity.healthManager.isWounded) {
-                playSound(resourcePack.soundPack.hit_1);
-                livingEntity.healthManager.isWounded = false;
-            }
-
-            if (shouldAutoAim && entity != Main.getClient().player.entity() && entity instanceof LivingEntity livingEntity) {
-                if (!livingEntity.healthManager.isInvincible && livingEntity.isAlive()) {
-                    targetEntity = livingEntity;
-                }
-            }
-
-            if (entity instanceof BossEntity) {
-                ((BossHealthBar) Hud.HudItems.BOSS_HEALTH_BAR.getRenderModule()).setTargetEntity((LivingEntity) entity);
-            }
-
-            if (entity instanceof LivingEntity livingEntity && livingEntity.healthManager.isInvincible) {
-                rgb[0] = 0.4f;
-                rgb[1] = 0.5f;
-                rgb[2] = 0.6f;
-            } else {
-                rgb[0] = 0.6f;
-                rgb[1] = 0.7f;
-                rgb[2] = 0.8f;
-            }
-
-            camara.render(entity.box.getTopLeft(tlPos), entity.box.getBottomLeft(blPos), null, null, GL_LINES, rgb[0], rgb[1], rgb[2]);
-            camara.render(entity.box.getBottomLeft(blPos), entity.box.getBottomRight(brPos), null, null, GL_LINES, rgb[0], rgb[1], rgb[2]);
-            camara.render(entity.box.getBottomRight(brPos), entity.box.getTopRight(trPos), null, null, GL_LINES, rgb[0], rgb[1], rgb[2]);
-            camara.render(trPos, tlPos, null, null, GL_LINES, rgb[0], rgb[1], rgb[2]);
-        }
-
-    }
-
     private void init() {
-        initGl();
+        //初始化OpenAL运行库
         initAl();
+        //初始化GLFW运行库
+        initGlfw();
+        //初始化OpenGL运行库
+        initGl();
+
+        //设置窗口大小
+        int[] w = new int[1];
+        int[] h = new int[1];
+        glfwGetWindowSize(window, w, h);
+        windowSize.set(w[0], h[0]);
+        camara = new Camara();
+        camara.setPos(new Vector2f());
+        reload(width, height);
+
+        //加载资源
+        try {
+            resourcePack = new ResourcePack("res/core");
+        } catch (ResourceLoadingException e) {
+            LOGGER.error("Failed to load resource pack: ", e);
+        }
+
+        //GL配置
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+
+        //加载来自资源包的所有着色器文本
+        program = glCreateProgram();
+        int vs = loadShader(resourcePack.shaderPack.vertex, GL_VERTEX_SHADER);
+        int fs = loadShader(resourcePack.shaderPack.fragment, GL_FRAGMENT_SHADER);
+        glAttachShader(program, vs);
+        glAttachShader(program, fs);
+        glLinkProgram(program);
+        glDeleteShader(vs);
+        glDeleteShader(fs);
+
+        textureProgram = glCreateProgram();
+        int tvs = loadShader(resourcePack.shaderPack.vertex_texture, GL_VERTEX_SHADER);
+        int tfs = loadShader(resourcePack.shaderPack.fragment_texture, GL_FRAGMENT_SHADER);
+        glAttachShader(textureProgram, tvs);
+        glAttachShader(textureProgram, tfs);
+        glLinkProgram(textureProgram);
+        glDeleteShader(tvs);
+        glDeleteShader(tfs);
+
+        entityProgram = glCreateProgram();
+        int evs = loadShader(resourcePack.shaderPack.entity_vertex, GL_VERTEX_SHADER);
+        int efs = loadShader(resourcePack.shaderPack.entity_fragment, GL_FRAGMENT_SHADER);
+        glAttachShader(entityProgram, evs);
+        glAttachShader(entityProgram, efs);
+        glLinkProgram(entityProgram);
+        glDeleteShader(evs);
+        glDeleteShader(efs);
+
+        //创建顶点缓存对象
+        int vbo = glGenBuffers();
+        int ebo = glGenBuffers();
+        skyVao = glGenVertexArrays();
+        glBindVertexArray(skyVao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, sky, GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, skyi, GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * Float.BYTES, 0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * Float.BYTES, 3 * Float.BYTES);
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+
+        glUseProgram(entityProgram);
+        glUniform2f(0, 0, 0);
+        glUniform2f(1, width, height);
+
+        //导入全局配置
         isInDebugMode = Boolean.parseBoolean(Main.getClient().properties.getProperty("debug-mode"));
         shouldAutoAim = Boolean.parseBoolean(Main.getClient().properties.getProperty("auto-aim"));
-        try {
-            resourcePack = new ResourcePack("res/terrarium_resource_pack");
-        } catch (ResourceLoadingException e) {
-            LOGGER.error(e);
-        }
+
+        //显示窗口
+        glfwShowWindow(window);
     }
 
-    private void initGl() {
+    private void initGlfw() {
         if (!glfwInit()) {
-            LOGGER.warn("Unable to initialize GLFW");
+            LOGGER.error("Unable to initialize GLFW");
         } else {
+            glfwSetErrorCallback((error, description) -> {
+                LOGGER.error("{}, {}", error, description);
+            });
             glfwDefaultWindowHints();
             glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
             glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
         }
-        int width = Integer.parseInt(Main.getClient().properties.getProperty("game-width"));
-        int height = Integer.parseInt(Main.getClient().properties.getProperty("game-height"));
+        width = Integer.parseInt(Main.getClient().properties.getProperty("game-width"));
+        height = Integer.parseInt(Main.getClient().properties.getProperty("game-height"));
         String title = isInDebugMode ? "Terrarium" :
                 "TERRARIUM";
         window = glfwCreateWindow(width, height, title, NULL, NULL);
@@ -214,33 +218,6 @@ public final class Renderer {
                 case GLFW_KEY_SPACE -> {
                     if (action != GLFW_RELEASE) {
                         Main.getClient().player.entity().moveController.jump(200, Main.getClient().getTerrarium().getWorldInfo().getGravity());
-                    }
-                }
-
-                case GLFW_KEY_F11 -> {
-                    if (action != GLFW_RELEASE) {
-                        hud.setEnable(!hud.isEnable());
-                    }
-                }
-
-                case GLFW_KEY_ENTER -> {
-                    if (action != GLFW_RELEASE) {
-                        CharBar charBar = (CharBar) Hud.HudItems.CHAT_BAR.getRenderModule();
-                        if (charBar.isEnable() && !charBar.toString().isEmpty()) {
-                            Main.getClient().getTerrarium().sendMassage(charBar.toString());
-                            charBar.clear();
-                        }
-                        charBar.setEnable(!charBar.isEnable());
-                    }
-                }
-
-                case GLFW_KEY_GRAVE_ACCENT -> {
-                    if (action != GLFW_RELEASE) {
-                        CharBar charBar = (CharBar) Hud.HudItems.CHAT_BAR.getRenderModule();
-                        if (charBar.isEnable() && !charBar.toString().isEmpty()) {
-                            Main.getClient().getTerrarium().sendMassage(charBar.toString());
-                        }
-                        charBar.setEnable(!charBar.isEnable());
                     }
                 }
 
@@ -273,23 +250,10 @@ public final class Renderer {
             reload(width1, height1);
         }));
         glfwSetCharCallback(window, (window1, codepoint) -> {
-            if (Hud.HudItems.CHAT_BAR.getRenderModule().isEnable()) {
-                ((CharBar) Hud.HudItems.CHAT_BAR.getRenderModule()).input((char) codepoint);
-            }
+
         });
         glfwMakeContextCurrent(window);
         glfwSwapInterval(1);
-        GL.createCapabilities();
-        int[] w = new int[1];
-        int[] h = new int[1];
-        glfwGetWindowSize(window, w, h);
-        windowSize.set(w[0], h[0]);
-        hud = new Hud();
-        hud.setEnable(true);
-        camara = new Camara();
-        camara.setPos(new Vector2f());
-        reload(width, height);
-        glfwShowWindow(window);
     }
 
     private void initAl() {
@@ -300,10 +264,80 @@ public final class Renderer {
         } else {
             throw new RuntimeException();
         }
-        int[] attrList = {0};
-        long context = alcCreateContext(device, attrList);
+        long context = alcCreateContext(device, new int[]{0});
         alcMakeContextCurrent(context);
         AL.createCapabilities(ALC.createCapabilities(device));
+    }
+
+    private void initGl() {
+        GL.createCapabilities();
+    }
+
+    private void update() {
+        if (isInDebugMode) {
+            glfwSetWindowTitle(window, String.format("Terrarium | fps=%s | tps=%s | entities=%s", getFps(), Main.getClient().getTerrarium().getTps(), Main.getClient().getTerrarium().getWorldInfo().getEntityList().size()));
+        }
+
+        glfwGetCursorPos(window, xpos, ypos);
+        cursorPos.set(xpos[0], ypos[0]);
+        Vector2f cursorPos2 = camara.getWorldPos(cursorPos);
+        Main.getClient().player.cursorPos.set(cursorPos2);
+
+        int leftButtonState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+        if (leftButtonState == GLFW_PRESS) {
+            Main.getClient().getTerrarium().useItem(Main.getClient().player.entity().getBackpack().getItem(Main.getClient().player.backpackIndex));
+        }
+
+        if (shouldAutoAim && targetEntity != null) {
+            Main.getClient().player.entity().targetPos.set(targetEntity.position);
+        } else {
+            Main.getClient().player.entity().targetPos.set(cursorPos2);
+        }
+
+        if (Main.getClient().player.isMovingToLeft) {
+            Main.getClient().player.entity().moveController.moveHorizontallyTo(false, 3);
+        }
+        if (Main.getClient().player.isMovingToRight) {
+            Main.getClient().player.entity().moveController.moveHorizontallyTo(true, 3);
+        }
+
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glUseProgram(program);
+        render(skyVao, 4, GL_QUADS);
+        glUseProgram(entityProgram);
+        List<Entity> entityList = Main.getClient().getTerrarium().getWorldInfo().getEntityList();
+        for (int i = 0; i < entityList.size(); i++) {
+            Entity entity = entityList.get(i);
+            int vbo = glGenBuffers();
+            int ebo = glGenBuffers();
+            int vao = glGenVertexArrays();
+            glBindVertexArray(vao);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            float[] vertices = getVertices(entity);
+            glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, new int[]{0, 1, 2, 3}, GL_DYNAMIC_DRAW);
+            glVertexAttribPointer(0, 2, GL_FLOAT, false, 5 * Float.BYTES, 0);
+            glVertexAttribPointer(1, 3, GL_FLOAT, false, 5 * Float.BYTES, 2 * Float.BYTES);
+            glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
+            render(vao, 4, GL_QUADS);
+        }
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    private static float[] getVertices(Entity entity) {
+        Vector2f center = entity.box.center;
+        float eHeight = entity.box.getHeight();
+        float eWidth = entity.box.getWidth();
+        return new  float[]{
+                center.x - eWidth, center.y + eHeight, 0.015f, 0.9f, 0.015f,
+                center.x + eWidth, center.y + eHeight, 0.015f, 0.9f, 0.015f,
+                center.x + eWidth, center.y - eHeight, 0.015f, 0.9f, 0.015f,
+                center.x - eWidth, center.y - eHeight, 0.765f, 0.9f, 0.015f
+        };
     }
 
     public void reload(int width, int height) {
@@ -326,7 +360,7 @@ public final class Renderer {
         glfwDestroyWindow(window);
     }
 
-    private void playSound(Sound sound) {
-        alSourcePlay(sound.source);
+    private void playSound(SoundSource soundSource) {
+        alSourcePlay(soundSource.source);
     }
 }

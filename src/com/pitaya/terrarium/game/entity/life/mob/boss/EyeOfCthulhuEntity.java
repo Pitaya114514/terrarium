@@ -4,12 +4,16 @@ import com.pitaya.terrarium.game.entity.Action;
 import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.entity.MoveController;
-import com.pitaya.terrarium.game.util.PosUtil;
 import com.pitaya.terrarium.game.World;
+import com.pitaya.terrarium.game.util.Util;
 import com.pitaya.terrarium.game.util.Velocity;
 import org.joml.Vector2f;
 
 public class EyeOfCthulhuEntity extends BossEntity {
+
+    public static EyeOfCthulhuEntity summon(Vector2f position) {
+        return new EyeOfCthulhuEntity(position, null);
+    }
 
     public EyeOfCthulhuEntity(Vector2f position, Entity target) {
         super("Eye of Cthulhu", new Box(100, 100, 45), new MoveController(true), position, 4641, 12, 5);
@@ -57,7 +61,7 @@ public class EyeOfCthulhuEntity extends BossEntity {
                 switch (actionState) {
                     case FIRST_CHASING -> {
                         chasingTarget.set(getTargetPos().x, getTargetPos().y + 94);
-                        velocity.radians = PosUtil.getRadians(entity.position, chasingTarget);
+                        velocity.radians = Util.Math.getRadians(entity.position, chasingTarget);
                         float distance = entity.position.distance(chasingTarget);
                         if (velocity.speed <= 2.78f) {
                             velocity.speed += 0.19f;
@@ -65,18 +69,18 @@ public class EyeOfCthulhuEntity extends BossEntity {
                         if (velocity.speed > distance) {
                             velocity.speed = distance;
                         }
-                        PosUtil.movePos(entity.position, velocity);
+                        Util.Math.movePos(entity.position, velocity);
                     }
                     case FIRST_CRASHING -> {
                         crashingTime++;
                         int maxTime = 50;
                         if (crashingTime == maxTime) {
                             crashingTarget.set(getTargetPos());
-                            crashingVelocity.radians = PosUtil.getRadians(entity.position, crashingTarget);
+                            crashingVelocity.radians = Util.Math.getRadians(entity.position, crashingTarget);
                             crashingVelocity.speed = 6.6f;
                             crashingCount++;
                         } else if (crashingTime > maxTime) {
-                            PosUtil.movePos(entity.position, crashingVelocity);
+                            Util.Math.movePos(entity.position, crashingVelocity);
                             if (crashingTime > maxTime + 15) {
                                 crashingVelocity.speed -= 0.8f;
                             }

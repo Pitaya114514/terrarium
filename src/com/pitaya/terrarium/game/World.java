@@ -8,7 +8,9 @@ import com.pitaya.terrarium.game.entity.life.LivingEntity;
 import com.pitaya.terrarium.game.entity.life.player.PlayerDifficulty;
 import com.pitaya.terrarium.game.entity.life.player.PlayerEntity;
 import com.pitaya.terrarium.game.entity.life.mob.boss.BossEntity;
-import com.pitaya.terrarium.game.util.Counter;
+import com.pitaya.terrarium.game.util.GenericEvent;
+import com.pitaya.terrarium.game.util.GenericEventListener;
+import com.pitaya.terrarium.game.util.Util;
 import com.pitaya.terrarium.game.world.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,13 +34,11 @@ public class World implements Runnable {
     public final List<Vector2f> centerPosList = new ArrayList<>();
     public final Chatroom chatroom;
     private final WorldInfo info = new WorldInfo();
+    private Util.Counter tpsCounter;
 
-    private Counter tpsCounter;
+    private final List<GenericEventListener> tickEventListeners = new ArrayList<>();
+    private final List<GenericEventListener> disposableTickEventListeners = new ArrayList<>();
 
-    private final List<WorldListener> tickEventListeners = new ArrayList<>();
-    private final List<WorldListener> disposableTickEventListeners = new ArrayList<>();
-
-    public volatile boolean paused = false;
     public final Object pauseLock = new Object();
 
     public World(String name, int gravity, WorldDifficulty difficulty) {
@@ -49,24 +49,15 @@ public class World implements Runnable {
         chatroom.addListener(event -> {
             List<String> messageList = ((Chatroom) event.getSource()).getMessageList();
             String message = messageList.get(messageList.size() - 1);
-            LOGGER.info("{} -> {}", date.toString(), message);
+            LOGGER.info("{} > {}", date.toString(), message);
         });
     }
 
     @Override
     public void run() {
-        tpsCounter = new Counter();
+        tpsCounter = new Util.Counter();
         tpsCounter.schedule();
         while (!stopFlag && !Thread.currentThread().isInterrupted()) {
-            synchronized (pauseLock) {
-                while (paused) {
-                    try {
-                        pauseLock.wait();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-                }
-            }
             update();
             tpsCounter.addCount();
             try {
@@ -95,7 +86,7 @@ public class World implements Runnable {
                         if (player.getDifficulty() == PlayerDifficulty.MEDIUMCORE) {
                             player.getBackpack().clear();
                         }
-                        chatroom.sendMessage(String.format("%s看着自己的内脏变成了外脏，凶手是%s。", entity.getName(), player.healthManager.getAttacker().getName()));
+                        chatroom.sendMessage(null, String.format("%s看着自己的内脏变成了外脏，凶手是%s。", entity.getName(), player.healthManager.getAttacker().getName()));
                         player.respawn();
                     } else {
                         killEntity(entity);
@@ -149,14 +140,14 @@ public class World implements Runnable {
             entity.getAction().act(this);
         }
 
-        for (WorldListener listener : tickEventListeners) {
-            listener.trigger(new WorldEvent(this));
+        for (GenericEventListener listener : tickEventListeners) {
+            listener.trigger(new GenericEvent(this));
         }
         try {
             disposableTickEventListeners.removeIf(new Predicate<>() {
                 @Override
-                public boolean test(WorldListener listener) {
-                    listener.trigger(new WorldEvent(this));
+                public boolean test(GenericEventListener listener) {
+                    listener.trigger(new GenericEvent(this));
                     return true;
                 }
             });
@@ -171,9 +162,9 @@ public class World implements Runnable {
         entity.setAlive(true);
         entity.getAction().start(this);
         if (entity instanceof BossEntity) {
-            chatroom.sendMessage(String.format("%s已苏醒！", entity.getName()));
+            chatroom.sendMessage(null, String.format("%s已苏醒！", entity.getName()));
         } else if (entity instanceof PlayerEntity) {
-            chatroom.sendMessage(String.format("%s已加入。", entity.getName()));
+            chatroom.sendMessage(null, String.format("%s已加入。", entity.getName()));
             centerPosList.add(entity.position);
         }
     }
@@ -191,9 +182,9 @@ public class World implements Runnable {
             if (removed) {
                 entity.setAlive(false);
                 if (entity instanceof BossEntity boss && boss.getHealth() <= 0) {
-                    chatroom.sendMessage(String.format("%s已被打败！", entity.getName()));
+                    chatroom.sendMessage(null, String.format("%s已被打败！", entity.getName()));
                 } else if (entity instanceof PlayerEntity player) {
-                    chatroom.sendMessage(String.format("%s看着自己的内脏变成了外脏，凶手是%s。", entity.getName(), player.healthManager.getAttacker().getName()));
+                    chatroom.sendMessage(null, String.format("%s看着自己的内脏变成了外脏，凶手是%s。", entity.getName(), player.healthManager.getAttacker().getName()));
                 }
             }
         });
@@ -221,11 +212,11 @@ public class World implements Runnable {
         return tpsCounter.getValue();
     }
 
-    public void addTickEventListener(WorldListener listener) {
+    public void addTickEventListener(GenericEventListener listener) {
         tickEventListeners.add(listener);
     }
 
-    public void addDisposableTickEventListener(WorldListener listener) {
+    public void addDisposableTickEventListener(GenericEventListener listener) {
         disposableTickEventListeners.add(listener);
     }
 

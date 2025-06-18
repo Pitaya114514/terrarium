@@ -25,7 +25,7 @@
     <orderEntry type="library" name="lwjgl-stb" level="project" />
     <orderEntry type="library" name="joml-1.10.9-20240802.170419-1" level="project" />
     <orderEntry type="library" name="guava-23.0" level="project" />
-    <orderEntry type="library" name="reflections-0.10.2" level="project" />
     <orderEntry type="library" name="netty-all-4.1.68.Final" level="project" />
+    <orderEntry type="library" name="classgraph-4.8.179" level="project" />
   </component>
 </module>

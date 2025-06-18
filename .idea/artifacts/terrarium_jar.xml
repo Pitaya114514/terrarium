@@ -8,7 +8,6 @@
       <element id="library" level="project" name="lwjgl-openal" />
       <element id="library" level="project" name="log4j2" />
       <element id="library" level="project" name="lwjgl-opengl" />
-      <element id="library" level="project" name="reflections-0.10.2" />
       <element id="library" level="project" name="jackson" />
       <element id="library" level="project" name="lwjgl-glfw" />
       <element id="library" level="project" name="lwjgl-stb" />

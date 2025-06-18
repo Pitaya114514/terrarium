@@ -5,15 +5,14 @@ import com.pitaya.terrarium.game.item.Item;
 import com.pitaya.terrarium.game.world.WorldInfo;
 
 public interface Terrarium {
-    class WorldValidator {
 
-    }
+    int executeCommand(String context);
 
     void addEntity(Entity entity);
 
     void useItem(Item item);
 
-    void sendMassage(String message);
+    void sendMassage(Object sender, String message);
 
     int getTps();
 

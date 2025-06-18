@@ -25,26 +25,30 @@ public class ServerCommunicator {
         this.address = address;
     }
 
-    public void load() throws CommunicationException {
-        try {
-            ServerBootstrap bootstrap = new ServerBootstrap();
-            bootstrap.group(bossGroup, workerGroup)
-                    .channel(NioServerSocketChannel.class)
-                    .childHandler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        public void initChannel(SocketChannel ch) {
-                            ch.pipeline().addLast(new ServerHandler());
-                        }
-                    });
-            ChannelFuture future = bootstrap.bind(address, port).sync();
-            LOGGER.info("The server has started, IP={}, port={}", address, port);
-            future.channel().closeFuture().sync();
-        } catch (Exception e) {
-            throw new CommunicationException(e);
-        } finally {
-            bossGroup.shutdownGracefully();
-            workerGroup.shutdownGracefully();
-        }
-
+    public void load() {
+        Thread communicatorThread = new Thread(() -> {
+            try {
+                ServerBootstrap bootstrap = new ServerBootstrap();
+                bootstrap.group(bossGroup, workerGroup)
+                        .channel(NioServerSocketChannel.class)
+                        .childHandler(new ChannelInitializer<SocketChannel>() {
+                            @Override
+                            public void initChannel(SocketChannel ch) {
+                                ch.pipeline().addLast(new ServerHandler());
+                            }
+                        });
+                ChannelFuture future = bootstrap.bind(address, port).sync();
+                LOGGER.info("The server has started, IP={}, port={}", address, port);
+                future.channel().closeFuture().sync();
+            } catch (Exception e) {
+                LOGGER.error("Unable to load server: ", new CommunicationException(e));
+                System.exit(e.hashCode());
+            } finally {
+                bossGroup.shutdownGracefully();
+                workerGroup.shutdownGracefully();
+            }
+        });
+        communicatorThread.setName("CommunicatorThread");
+        communicatorThread.start();
     }
 }

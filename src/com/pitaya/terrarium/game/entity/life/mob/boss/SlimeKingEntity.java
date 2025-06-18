@@ -12,6 +12,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class SlimeKingEntity extends BossEntity {
 
+    public static SlimeKingEntity summon(Vector2f position) {
+        return new SlimeKingEntity(position, null);
+    }
 
     public SlimeKingEntity(Vector2f position, Entity target) {
         super("Slime King", new Box(200, 155, 96), new MoveController(false), position, 3570, 10, 5);

@@ -3,14 +3,15 @@ package com.pitaya.terrarium.game.world;
 import com.pitaya.terrarium.game.effect.Effect;
 import com.pitaya.terrarium.game.entity.Entity;
 import com.pitaya.terrarium.game.item.Item;
-import com.pitaya.terrarium.game.util.SubclassFinder;
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ScanResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class IDLoader {
     private static final Logger LOGGER = LogManager.getLogger(IDLoader.class);
@@ -30,38 +31,42 @@ public class IDLoader {
     private final HashMap<Class<? extends Effect>, Short> effectIDMap = new HashMap<>();
 
     private IDLoader() {
-        SubclassFinder<Entity> entityClassFinder = new SubclassFinder<>();
-        Set<Class<? extends Entity>> entityClasses = entityClassFinder.findSubclasses(Entity.class);
-        short entityOrdinal = 1;
-        for (Class<? extends Entity> subclass : entityClasses) {
-            if (!Modifier.isAbstract(subclass.getModifiers())) {
-                entityIDMap.put(subclass, entityOrdinal);
-                entityOrdinal++;
+        try (ScanResult scanResult = new ClassGraph().enableClassInfo().scan()) {
+            List<Class<?>> entityClasses = scanResult.getSubclasses(Entity.class).loadClasses();
+            short eid = 0;
+            for (Class<?> entityClass : entityClasses) {
+                int modifiers = entityClass.getModifiers();
+                if (!Modifier.isAbstract(modifiers) && !Modifier.isInterface(modifiers) && !entityClass.isEnum()) {
+                    eid++;
+                    entityIDMap.put((Class<? extends Entity>) entityClass, eid);
+                }
             }
-        }
-        LOGGER.info("All entities has been initialized");
+            LOGGER.info("All entities has been initialized");
 
-        SubclassFinder<Item> itemClassFinder = new SubclassFinder<>();
-        Set<Class<? extends Item>> itemClasses = itemClassFinder.findSubclasses(Item.class);
-        short itemOrdinal = 1;
-        for (Class<? extends Item> subclass : itemClasses) {
-            if (!Modifier.isAbstract(subclass.getModifiers())) {
-                itemIDMap.put(subclass, itemOrdinal);
-                itemOrdinal++;
+            List<Class<?>> itemClasses = scanResult.getSubclasses(Item.class).loadClasses();
+            short iid = 0;
+            for (Class<?> itemClass : itemClasses) {
+                int modifiers = itemClass.getModifiers();
+                if (!Modifier.isAbstract(modifiers) && !Modifier.isInterface(modifiers) && !itemClass.isEnum()) {
+                    iid++;
+                    itemIDMap.put((Class<? extends Item>) itemClass, iid);
+                }
             }
-        }
-        LOGGER.info("All items has been initialized");
+            LOGGER.info("All items has been initialized");
 
-        SubclassFinder<Effect> effectClassFinder = new SubclassFinder<>();
-        Set<Class<? extends Effect>> effectClasses = effectClassFinder.findSubclasses(Effect.class);
-        short effectOrdinal = 1;
-        for (Class<? extends Effect> subclass : effectClasses) {
-            if (!Modifier.isAbstract(subclass.getModifiers())) {
-                effectIDMap.put(subclass, effectOrdinal);
-                effectOrdinal++;
+            List<Class<?>> effectClasses = scanResult.getSubclasses(Effect.class).loadClasses();
+            short efid = 0;
+            for (Class<?> effectClass : effectClasses) {
+                int modifiers = effectClass.getModifiers();
+                if (!Modifier.isAbstract(modifiers) && !Modifier.isInterface(modifiers) && !effectClass.isEnum()) {
+                    efid++;
+                    effectIDMap.put((Class<? extends Effect>) effectClass, efid);
+                }
             }
+            LOGGER.info("All effects has been initialized");
         }
-        LOGGER.info("All effects has been initialized");
+
+
     }
 
     public HashMap<Class<? extends Entity>, Short> getEntityIDMap() {

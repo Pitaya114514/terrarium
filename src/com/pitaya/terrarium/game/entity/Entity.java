@@ -23,6 +23,11 @@ public abstract class Entity {
         }
     }
 
+    public static Entity summon(Vector2f position) {
+        return new Entity("UnknownEntity", new Box(0, 0, 0), new MoveController(false), position, null) {
+        };
+    }
+
     public final Box box;
     public final MoveController moveController;
     public final Vector2f position = new Vector2f();
@@ -134,5 +139,16 @@ public abstract class Entity {
             }
         }
         return id;
+    }
+
+    @Override
+    public String toString() {
+        return  this.getClass().getSimpleName() + ":{position=" + position +
+                ", group=" + group +
+                ", isAlive=" + isAlive +
+                ", attackTarget=" + attackTarget +
+                ", id=" + getId() +
+                ", name='" + name + '\'' +
+                '}';
     }
 }

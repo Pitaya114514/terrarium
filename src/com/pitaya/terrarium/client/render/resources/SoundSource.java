@@ -8,16 +8,15 @@ import java.nio.ShortBuffer;
 
 import static org.lwjgl.openal.AL10.*;
 import static org.lwjgl.stb.STBVorbis.stb_vorbis_decode_filename;
-import static org.lwjgl.system.MemoryStack.stackMallocInt;
 
-public class Sound {
+public class SoundSource {
     public final int source;
     public final int buffer;
 
-    protected Sound(String path) throws ResourceLoadingException {
+    protected SoundSource(String path) throws ResourceLoadingException {
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            IntBuffer channels = stackMallocInt(1);
-            IntBuffer sampleRate = stackMallocInt(1);
+            IntBuffer channels = stack.mallocInt(1);
+            IntBuffer sampleRate = stack.mallocInt(1);
             ShortBuffer rawAudioBuffer = stb_vorbis_decode_filename(path, channels, sampleRate);
             if (rawAudioBuffer == null) {
                 throw new ResourceLoadingException();

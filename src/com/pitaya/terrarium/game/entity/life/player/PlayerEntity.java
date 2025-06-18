@@ -3,12 +3,19 @@ package com.pitaya.terrarium.game.entity.life.player;
 import com.pitaya.terrarium.game.effect.Debuff;
 import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.life.LivingEntity;
+import com.pitaya.terrarium.game.entity.life.mob.BlueSlimeEntity;
 import com.pitaya.terrarium.game.item.Backpack;
 import com.pitaya.terrarium.game.item.other.*;
 import com.pitaya.terrarium.game.item.weapon.SDMGItem;
 import org.joml.Vector2f;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class PlayerEntity extends LivingEntity {
+    public static PlayerEntity summon(Vector2f position) {
+        return new PlayerEntity("aPlayer" + ThreadLocalRandom.current().nextInt(), position, PlayerDifficulty.CLASSIC);
+    }
+
     private PlayerDifficulty difficulty;
     private int usingCd;
     private final Backpack backpack = new Backpack(this, 30);

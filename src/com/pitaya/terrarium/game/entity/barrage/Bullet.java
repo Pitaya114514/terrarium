@@ -3,8 +3,8 @@ package com.pitaya.terrarium.game.entity.barrage;
 import com.pitaya.terrarium.game.entity.Action;
 import com.pitaya.terrarium.game.entity.Box;
 import com.pitaya.terrarium.game.entity.MoveController;
-import com.pitaya.terrarium.game.util.PosUtil;
 import com.pitaya.terrarium.game.World;
+import com.pitaya.terrarium.game.util.Util;
 import com.pitaya.terrarium.game.util.Velocity;
 import org.joml.Vector2f;
 
@@ -16,7 +16,7 @@ public class Bullet extends BarrageEntity {
         public BulletAction(BarrageEntity entity, Vector2f targetPos, float speed) {
             super(entity);
             this.speed = speed;
-            velocity = new Velocity(this.speed, PosUtil.getRadians(entity.position, targetPos));
+            velocity = new Velocity(this.speed, Util.Math.getRadians(entity.position, targetPos));
         }
 
         @Override
@@ -29,7 +29,7 @@ public class Bullet extends BarrageEntity {
             if (((BarrageEntity) entity).penetration > 1) {
                 world.killEntity(entity);
             }
-            PosUtil.movePos(entity.position, velocity);
+            Util.Math.movePos(entity.position, velocity);
         }
 
         @Override
