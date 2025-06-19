@@ -13,7 +13,7 @@ import java.util.Properties;
 
 public class TerrariumServer {
     private static final Logger LOGGER = LogManager.getLogger(TerrariumServer.class);
-    public static final String SERVER_VERSION = "b1.3.5-server";
+    public static final String SERVER_VERSION = "b1.4.0.1-server";
     public final Properties properties;
     private Terrarium terrarium;
     public final ServerCommunicator communicator;

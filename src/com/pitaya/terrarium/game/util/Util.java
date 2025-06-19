@@ -98,8 +98,8 @@ public final class Util {
     public final static class Rendering {
         private Rendering() {}
 
-        public static float getVertexPos(float windowPos, float windowLength) {
-            return 2 * windowPos / windowLength;
+        public static float[] getColorVertex(Color awtColor) {
+            return awtColor.getColorComponents(new float[3]);
         }
 
         public static float[] getVertex(Vector2f pos, Color color) {

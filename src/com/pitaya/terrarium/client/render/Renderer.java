@@ -1,5 +1,9 @@
 package com.pitaya.terrarium.client.render;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.CacheStats;
+import com.google.common.cache.LoadingCache;
 import com.pitaya.terrarium.Main;
 import com.pitaya.terrarium.client.GameLoader;
 import com.pitaya.terrarium.client.render.resources.ResourceLoadingException;
@@ -20,9 +24,12 @@ import org.lwjgl.stb.STBImage;
 
 import java.awt.*;
 import java.io.IOException;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import static com.pitaya.terrarium.game.util.Util.Rendering.*;
 import static org.lwjgl.glfw.GLFW.*;
@@ -34,9 +41,11 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 public final class Renderer {
     public final static Logger LOGGER = LogManager.getLogger(Renderer.class);
 
-    private ResourcePack resourcePack;
     private boolean isInDebugMode;
     private boolean shouldAutoAim;
+    private int maximumRenderableEntities;
+
+    private ResourcePack resourcePack;
     private Util.Counter fpsCounter = new Util.Counter();
     private Camara camara;
     private long window;
@@ -48,12 +57,35 @@ public final class Renderer {
     private final double[] ypos = new double[1];
     private final Vector2f cursorPos = new Vector2f();
     private final Vector2f windowSize = new Vector2f();
+    private final LoadingCache<Entity, int[]> entityRenderingCache = CacheBuilder.newBuilder()
+            .maximumSize(500)
+            .expireAfterAccess(12, TimeUnit.SECONDS)
+            .recordStats()
+            .build(new CacheLoader<>() {
+                @Override
+                public int[] load(Entity entity) {
+                    int vbo = glGenBuffers();
+                    int ebo = glGenBuffers();
+                    int vao = glGenVertexArrays();
+                    glBindVertexArray(vao);
+                    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+                    float[] vertices = getEntityVertices(entity);
+                    glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, new int[]{0, 1, 2, 3}, GL_DYNAMIC_DRAW);
+                    glVertexAttribPointer(0, 2, GL_FLOAT, false, 5 * Float.BYTES, 0);
+                    glVertexAttribPointer(1, 3, GL_FLOAT, false, 5 * Float.BYTES, 2 * Float.BYTES);
+                    glEnableVertexAttribArray(0);
+                    glEnableVertexAttribArray(1);
+                    return new int[]{vao, vbo, ebo};
+                }
+            });
 
     float[] sky = Util.Rendering.getVertices(
-            getVertex(-1.0f, 1.0f, new Color(3, 128, 190)),
-            getVertex(1.0f, 1.0f, new Color(3, 128, 190)),
-            getVertex(1.0f, -1.0f, new Color(240, 243, 241)),
-            getVertex(-1.0f, -1.0f, new Color(240, 243, 241)));
+            getVertex(-1.0f, 1.0f, new Color(17, 170, 229)),
+            getVertex(1.0f, 1.0f, new Color(6, 48, 190)),
+            getVertex(1.0f, -1.0f, new Color(255, 255, 255)),
+            getVertex(-1.0f, -1.0f, new Color(255, 255, 255)));
     int[] skyi = {0, 1, 2, 3};
     int skyVao;
 
@@ -97,6 +129,11 @@ public final class Renderer {
     }
 
     private void init() {
+        //导入全局配置
+        maximumRenderableEntities = Integer.parseInt(Main.getClient().properties.getProperty("maximum-renderable-entities"));
+        isInDebugMode = Boolean.parseBoolean(Main.getClient().properties.getProperty("debug-mode"));
+        shouldAutoAim = Boolean.parseBoolean(Main.getClient().properties.getProperty("auto-aim"));
+
         //初始化OpenAL运行库
         initAl();
         //初始化GLFW运行库
@@ -159,6 +196,7 @@ public final class Renderer {
         glBindVertexArray(skyVao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, sky, GL_STATIC_DRAW);
+        System.out.println(Arrays.toString(sky));
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, skyi, GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * Float.BYTES, 0);
@@ -167,12 +205,7 @@ public final class Renderer {
         glEnableVertexAttribArray(1);
 
         glUseProgram(entityProgram);
-        glUniform2f(0, 0, 0);
         glUniform2f(1, width, height);
-
-        //导入全局配置
-        isInDebugMode = Boolean.parseBoolean(Main.getClient().properties.getProperty("debug-mode"));
-        shouldAutoAim = Boolean.parseBoolean(Main.getClient().properties.getProperty("auto-aim"));
 
         //显示窗口
         glfwShowWindow(window);
@@ -280,6 +313,7 @@ public final class Renderer {
 
         glfwGetCursorPos(window, xpos, ypos);
         cursorPos.set(xpos[0], ypos[0]);
+        camara.setPos(Main.getClient().player.entity().position);
         Vector2f cursorPos2 = camara.getWorldPos(cursorPos);
         Main.getClient().player.cursorPos.set(cursorPos2);
 
@@ -306,38 +340,37 @@ public final class Renderer {
         glUseProgram(program);
         render(skyVao, 4, GL_QUADS);
         glUseProgram(entityProgram);
+        glUniform2f(0, camara.pos.x, camara.pos.y);
         List<Entity> entityList = Main.getClient().getTerrarium().getWorldInfo().getEntityList();
-        for (int i = 0; i < entityList.size(); i++) {
-            Entity entity = entityList.get(i);
-            int vbo = glGenBuffers();
-            int ebo = glGenBuffers();
-            int vao = glGenVertexArrays();
-            glBindVertexArray(vao);
-            glBindBuffer(GL_ARRAY_BUFFER, vbo);
-            float[] vertices = getVertices(entity);
-            glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, new int[]{0, 1, 2, 3}, GL_DYNAMIC_DRAW);
-            glVertexAttribPointer(0, 2, GL_FLOAT, false, 5 * Float.BYTES, 0);
-            glVertexAttribPointer(1, 3, GL_FLOAT, false, 5 * Float.BYTES, 2 * Float.BYTES);
-            glEnableVertexAttribArray(0);
-            glEnableVertexAttribArray(1);
-            render(vao, 4, GL_QUADS);
+        try {
+            for (int i = 0; i < entityList.size(); i++) {
+                Entity entity = entityList.get(i);
+                int[] entityRenderingObject = entityRenderingCache.get(entity);
+                glBindBuffer(GL_ARRAY_BUFFER, entityRenderingObject[1]);
+                glBufferSubData(GL_ARRAY_BUFFER, 0, getEntityVertices(entity));
+                render(entityRenderingObject[0], 4, GL_LINE_LOOP);
+                if (entity instanceof LivingEntity livingEntity && livingEntity.healthManager.isWounded) {
+                    playSound(resourcePack.soundPack.hit_1);
+                    livingEntity.healthManager.isWounded = false;
+                }
+            }
+        } catch (ExecutionException e) {
+            LOGGER.error(e.getMessage());
         }
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    private static float[] getVertices(Entity entity) {
+    private static float[] getEntityVertices(Entity entity) {
         Vector2f center = entity.box.center;
         float eHeight = entity.box.getHeight();
         float eWidth = entity.box.getWidth();
-        return new  float[]{
-                center.x - eWidth, center.y + eHeight, 0.015f, 0.9f, 0.015f,
-                center.x + eWidth, center.y + eHeight, 0.015f, 0.9f, 0.015f,
-                center.x + eWidth, center.y - eHeight, 0.015f, 0.9f, 0.015f,
-                center.x - eWidth, center.y - eHeight, 0.765f, 0.9f, 0.015f
-        };
+        return FloatBuffer.allocate(5 * 4)
+                .put(center.x - eWidth).put(center.y + eHeight).put(getColorVertex(new Color(248, 5, 5)))
+                .put(center.x + eWidth).put(center.y + eHeight).put(getColorVertex(new Color(21, 13, 250)))
+                .put(center.x + eWidth).put(center.y - eHeight).put(getColorVertex(new Color(61, 241, 11)))
+                .put(center.x - eWidth).put(center.y - eHeight).put(getColorVertex(new Color(227, 227, 27))).array();
     }
 
     public void reload(int width, int height) {

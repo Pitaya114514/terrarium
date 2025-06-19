@@ -20,7 +20,7 @@ import java.util.Set;
 
 public class TerrariumClient {
     private static final Logger LOGGER = LogManager.getLogger(TerrariumClient.class);
-    public static final String CLIENT_VERSION = "b1.3.5-client";
+    public static final String CLIENT_VERSION = "b1.4.0.1-client";
 
     public final Properties properties;
     public final Renderer gameRenderer;
@@ -41,6 +41,7 @@ public class TerrariumClient {
         this.properties = new Properties();
         properties.setProperty("game-width", "1600");
         properties.setProperty("game-height", "900");
+        properties.setProperty("maximum-renderable-entities", "500");
         properties.setProperty("smooth-camara", "false");
         properties.setProperty("debug-mode", "true");
         properties.setProperty("auto-aim", "true");

@@ -8,7 +8,7 @@ import org.lwjgl.opengl.GL33;
 
 public final class Camara {
     private float speed = 3.0f;
-    private final Vector2f pos = new Vector2f();
+    public final Vector2f pos = new Vector2f();
     public final float aspectRatio = Float.parseFloat(Main.getClient().properties.getProperty("game-width")) /
             Float.parseFloat(Main.getClient().properties.getProperty("game-height"));
     private boolean isSmoothCamara = Boolean.parseBoolean(Main.getClient().properties.getProperty("smooth-camara"));
