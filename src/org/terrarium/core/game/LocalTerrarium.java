@@ -142,6 +142,11 @@ public class LocalTerrarium implements Terrarium {
         return mainWorld.getBlock(x, y);
     }
 
+    @Override
+    public void setBlock(int x, int y, Block block) {
+
+    }
+
     public void save() {
         LOGGER.info("Saving world: {}", mainWorld);
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(mainWorld.getName() + ".wld"))) {

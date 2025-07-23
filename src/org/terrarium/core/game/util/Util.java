@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -155,6 +156,10 @@ public final class Util {
         }
 
         public static int saveChunks(IntBuffer... chunkData) throws IOException {
+            Path path = Path.of("chunks.wld");
+            if (!Files.exists(path)) {
+                Files.createFile(path);
+            }
             try (FileChannel channel = new FileOutputStream("chunks.wld").getChannel()) {
                 ByteBuffer chunkd = ByteBuffer.allocate(Integer.BYTES * chunkData.length * CHUNK_CAPACITY);
                 for (IntBuffer chunkDatum : chunkData) {
@@ -168,6 +173,9 @@ public final class Util {
         }
 
         public static IntBuffer[] loadChunks() throws IOException {
+            if (!Files.exists(Path.of("chunks.wld"))) {
+                return null;
+            }
             try (FileChannel channel = new FileInputStream("chunks.wld").getChannel()) {
                 ArrayList<IntBuffer> chunksd = new ArrayList<>();
                 while (true) {
@@ -179,55 +187,6 @@ public final class Util {
                 }
                 return chunksd.toArray(new IntBuffer[0]);
             }
-        }
-    }
-
-    public final static class Rendering {
-        private Rendering() {}
-
-        public static float[] getColorVertex(Color awtColor) {
-            return awtColor.getColorComponents(new float[3]);
-        }
-
-        public static float[] getVertex(float x, float y, Color color) {
-            float[] floatColor = color.getColorComponents(new float[3]);
-            float[] vertex = new float[6];
-            vertex[0] = x;
-            vertex[1] = y;
-            vertex[2] = 0;
-            vertex[3] = floatColor[0];
-            vertex[4] = floatColor[1];
-            vertex[5] = floatColor[2];
-            return vertex;
-        }
-
-        public static float[] getVertices(float[]... v) {
-            int length = 0;
-            for (float[] vertex : v) {
-                length += vertex.length;
-            }
-            float[] vertices = new float[length];
-            int i = 0;
-            for (float[] vertex : v) {
-                System.arraycopy(vertex, 0, vertices, i, vertex.length);
-                i += vertex.length;
-            }
-            return vertices;
-        }
-
-        public static int loadShader(String context, int type) {
-            int shader = glCreateShader(type);
-            glShaderSource(shader, context);
-            glCompileShader(shader);
-            if (glGetShaderi(shader, GL_COMPILE_STATUS) == GL_FALSE) {
-                return 0;
-            }
-            return shader;
-        }
-
-        public static void render(int vao, int indices, int type) {
-            glBindVertexArray(vao);
-            glDrawElements(type, indices, GL_UNSIGNED_INT, 0);
         }
     }
 

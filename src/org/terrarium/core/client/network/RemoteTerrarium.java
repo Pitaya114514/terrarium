@@ -110,4 +110,9 @@ public class RemoteTerrarium implements Terrarium {
     public Block getBlock(int x, int y) {
         return null;
     }
+
+    @Override
+    public void setBlock(int x, int y, Block block) {
+
+    }
 }

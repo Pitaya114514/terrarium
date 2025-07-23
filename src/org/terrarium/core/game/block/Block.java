@@ -5,12 +5,12 @@ import org.terrarium.core.game.Attribute;
 import org.terrarium.core.game.entity.Box;
 import org.terrarium.core.game.entity.Entity;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class Block implements Serializable{
-    public static class Factory implements Serializable {
+public final class Block {
+
+    public static class Factory {
         private final String type;
         private ArrayList<Attribute> attributes;
 
@@ -31,14 +31,14 @@ public final class Block implements Serializable{
         }
     }
 
-    public transient final String type;
-    public transient final Box box = new Box(1, 1) {
+    public final String type;
+    public final Box box = new Box(1, 1) {
         @Override
         public void collide(List<Entity> entities) {
 
         }
     };
-    public transient final ArrayList<Attribute> attributes;
+    public final ArrayList<Attribute> attributes;
 
     private Vector2i position;
 

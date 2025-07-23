@@ -3,7 +3,6 @@ package org.terrarium.base;
 import org.joml.Vector2i;
 import org.terrarium.core.game.Attribute;
 import org.terrarium.core.game.GameInitializer;
-import org.terrarium.core.game.Terrarium;
 import org.terrarium.core.game.World;
 import org.terrarium.core.game.block.Block;
 import org.terrarium.core.game.command.Command;
@@ -16,9 +15,7 @@ import org.terrarium.core.game.world.Chunk;
 import org.terrarium.core.game.world.WorldGenerator;
 
 import java.awt.*;
-import java.io.File;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 public class BaseGameInitializer implements GameInitializer {

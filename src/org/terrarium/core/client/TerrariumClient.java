@@ -145,8 +145,8 @@ public class TerrariumClient {
 
         int width = Integer.parseInt(Main.getClient().configManager.find("client", "game-window-width"));
         int height = Integer.parseInt(Main.getClient().configManager.find("client", "game-window-height"));
-        String title = "Terrarium " + Main.VERSION;
 
+        String title = "Terrarium " + Main.VERSION;
         long window = glfwCreateWindow(width, height, title, NULL, NULL);
         if (window == NULL) {
             return window;

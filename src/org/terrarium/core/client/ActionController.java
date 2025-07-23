@@ -2,70 +2,89 @@ package org.terrarium.core.client;
 
 import org.joml.Vector2f;
 import org.terrarium.core.game.Terrarium;
-import org.terrarium.core.game.entity.Box;
 import org.terrarium.core.game.entity.Entity;
 
 public final class ActionController {
     private int floatTime;
-    public final Vector2f mousePos = new Vector2f();
     public boolean leftKey;
-    public boolean leftMouse;
     public boolean rightKey;
     public boolean spaceKey;
 
     void tick(Player player, Terrarium terrarium) {
         Entity entity = player.getEntity();
         Vector2f position = entity.getPosition();
-        Box box = entity.box;
         Vector2f size = entity.box.size;
 
-        int top = 0;
         boolean lb = false;
         boolean rb = false;
 
-        int ltx = (int) (position.x - size.x / 2);
-        int lty = (int) (position.y + size.y / 2);
-        int rtx = (int) (position.x + size.x / 2);
-        int rty = (int) (position.y + size.y / 2);
-        int rbx = (int) (position.x + size.x / 2);
-        int rby = (int) (position.y - size.y / 2);
-        int lbx = (int) (position.x - size.x / 2);
-        int lby = (int) (position.y - size.y / 2);
-        for (int i = 0; i < rbx - lbx; i++) {
-            if (terrarium.getBlock(rbx - i, lby) != null) {
-                top = lby;
-                break;
-            }
-        }
-        for (int i = 0; i < lty - lby; i++) {
-            if (terrarium.getBlock(lbx, lty - i) != null) {
-                lb = true;
-                break;
-            }
-        }
+        float rx = position.x + size.x / 2;
+        float lx = position.x - size.x / 2;
+        float by = position.y - size.y / 2;
+        float ty = position.y + size.y / 2;
 
-        for (int i = 0; i < rty - rby; i++) {
-            if (terrarium.getBlock(rbx, rty - i) != null) {
-                rb = true;
+        int brx = (int) Math.floor(position.x + size.x / 2);
+        int blx = (int) Math.floor(position.x - size.x / 2);
+        int bby = (int) Math.floor(position.y - size.y / 2);
+        int bty = (int) Math.floor(position.y + size.y / 2);
+
+        boolean shouldFall = true;
+        boolean shouldBreak = false;
+        float fallDistance = (0.5f * 2 * floatTime) / 60.0f;
+        for (int i = 0; i < Math.min(1, fallDistance); i++) {
+            for (int j = 0; j < brx - blx + 1; j++) {
+                if (terrarium.getBlock(brx - j, bby - i) != null) {
+                    shouldFall = false;
+                    shouldBreak = true;
+                    fallDistance = 0;
+                }
+            }
+            if (shouldBreak) {
                 break;
             }
         }
-
-        float h = size.y / 2;
-        if (position.y - h > top + 1) {
+        if (shouldFall) {
             floatTime++;
-            float v = (0.5f * 2 * floatTime) / 60.0f;
-            float m = position.y - v;
-            position.set(position.x, m);
         } else {
             floatTime = 0;
         }
 
+        if (fallDistance != 0) {
+            position.set(position.x, position.y - fallDistance);
+        }
+
+        float moveSpeed = 100f;
+        if (leftKey) {
+            boolean shouldMove = true;
+            for (int i = 0; i < bty - bby; i++) {
+                if (terrarium.getBlock((int) Math.floor(lx - moveSpeed), bty - i) != null) {
+                    shouldMove = false;
+                    break;
+                }
+            }
+            if (shouldMove) {
+                position.x -= moveSpeed;
+            } else {
+                position.x = (float) Math.floor(position.x) + moveSpeed / 10;
+            }
+        }
+
+        if (rightKey) {
+            boolean shouldMove = true;
+            for (int i = 0; i < bty - bby; i++) {
+                if (terrarium.getBlock((int) Math.floor(rx + moveSpeed), bty - i) != null) {
+                    shouldMove = false;
+                    break;
+                }
+            }
+            if (shouldMove) {
+                position.x += moveSpeed;
+            } else {
+                position.x = (float) Math.ceil(position.x) - moveSpeed / 10;
+            }
+        }
+
         if (spaceKey) jump(13);
-
-        if (leftKey && !lb) position.x -= 0.5f;
-
-        if (rightKey && !rb) position.x += 0.5f;
 
     }
 

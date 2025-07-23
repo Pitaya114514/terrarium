@@ -10,8 +10,8 @@ import org.terrarium.core.game.block.Block;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-public final class Entity implements Serializable {
-    public static class Factory implements Serializable {
+public final class Entity {
+    public static class Factory {
         private final String type;
         private ArrayList<Attribute> attributes;
         private Box box;

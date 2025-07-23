@@ -40,4 +40,6 @@ public interface Terrarium {
     Map<Entity, Chunk[]> getChunkMap();
 
     Block getBlock(int x, int y);
+
+    void setBlock(int x, int y, Block block);
 }

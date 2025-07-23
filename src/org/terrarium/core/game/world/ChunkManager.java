@@ -44,10 +44,13 @@ public class ChunkManager {
             }
         }
         //从硬盘加载
-        for (IntBuffer chunkData : Util.IO.loadChunks()) {
-            if (chunkData.get() == x && chunkData.get() == y) {
-                chunkData.position(0);
-                return Util.IO.deserialize(chunkData, regBlocks);
+        IntBuffer[] chunkData = Util.IO.loadChunks();
+        if (chunkData != null) {
+            for (IntBuffer chunkDatum : chunkData) {
+                if (chunkDatum.get() == x && chunkDatum.get() == y) {
+                    chunkDatum.position(0);
+                    return Util.IO.deserialize(chunkDatum, regBlocks);
+                }
             }
         }
         //生成
@@ -73,15 +76,5 @@ public class ChunkManager {
         }
         unloadedChunkHeap.clear();
         unloadedChunkHeap.trimToSize();
-    }
-
-    public boolean isExists(int x, int y) {
-        for (Chunk chunk : chunkHeap) {
-            Vector2i p = chunk.position;
-            if (p.x == x && p.y == y) {
-                return true;
-            }
-        }
-        return false;
     }
 }
