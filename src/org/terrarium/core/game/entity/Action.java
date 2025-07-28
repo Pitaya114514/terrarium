@@ -2,11 +2,11 @@ package org.terrarium.core.game.entity;
 
 import org.terrarium.core.game.World;
 
-public abstract class Action {
+public interface Action {
 
-    public abstract void start(World world);
+    void start(World world, Entity entity);
 
-    public abstract void act(World world);
+    void act(World world, Entity entity);
 
-    public abstract void end(World world);
+    void end(World world, Entity entity);
 }

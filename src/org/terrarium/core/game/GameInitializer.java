@@ -1,6 +1,5 @@
 package org.terrarium.core.game;
 
-import org.terrarium.base.BaseGameInitializer;
 import org.terrarium.core.game.block.Block;
 import org.terrarium.core.game.command.Command;
 import org.terrarium.core.game.effect.Effect;

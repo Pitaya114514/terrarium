@@ -1,5 +1,8 @@
 package org.terrarium.core.game.world;
 
 public interface WorldGenerator {
-    Chunk generate(int x, int y, long seed);
+    record Generator(Chunk chunk, Structure[] structures) {
+    }
+
+    Generator generate(int x, int y, long seed);
 }

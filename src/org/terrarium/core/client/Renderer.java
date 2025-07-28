@@ -3,6 +3,7 @@ package org.terrarium.core.client;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.joml.Vector2i;
 import org.terrarium.Main;
 import org.terrarium.core.client.resources.ShaderPack;
 import org.terrarium.core.game.Terrarium;
@@ -26,7 +27,8 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33.*;
 
 public final class Renderer {
-    public final static Logger LOGGER = LogManager.getLogger(Renderer.class);
+    private final static Logger LOGGER = LogManager.getLogger(Renderer.class);
+    private final static int RENDERING_CHUNK_SIZE = 524288;
 
     private final FloatBuffer blockRenderingBuffer = FloatBuffer.allocate(5 * 4);
     private final FloatBuffer entityRenderingBuffer = FloatBuffer.allocate(5 * 4);
@@ -84,7 +86,7 @@ public final class Renderer {
             getVertex(1.0f, 1.0f, new Color(6, 48, 190)),
             getVertex(1.0f, -1.0f, new Color(255, 255, 255)),
             getVertex(-1.0f, -1.0f, new Color(255, 255, 255)));
-    int[] skyi = {0, 1, 2, 3};
+    int[] skyIndices = {0, 1, 2, 3};
     int skyVao;
 
     int program;
@@ -97,6 +99,18 @@ public final class Renderer {
     private final float[] dirtColor = getColorVertex(new Color(193, 114, 33));
     private final float[] stoneColor = getColorVertex(new Color(130, 130, 130));
     private final float[] grassColor = getColorVertex(new Color(101, 222, 81));
+    private final float[] iceColor = getColorVertex(new Color(147, 219, 248));
+    private final float[] snowColor = getColorVertex(new Color(191, 213, 215));
+    private final float[] sandColor = getColorVertex(new Color(222, 197, 114));
+    private final float[] treeColor = getColorVertex(new Color(173, 128, 68));
+
+    public float getGamePosX(double cursorPosX) {
+        return (float) ((cursorPosX - windowSize.x / 2) / zoomMultiplier - camara.pos.x);
+    }
+
+    public float getGamePosY(double cursorPosY) {
+        return (float) (camara.pos.y - (cursorPosY - windowSize.y / 2) / zoomMultiplier);
+    }
 
     public void load(long window) {
         if (!glfwInit()) {
@@ -163,15 +177,15 @@ public final class Renderer {
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, sky, GL_STATIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, skyi, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, skyIndices, GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * Float.BYTES, 0);
         glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * Float.BYTES, 3 * Float.BYTES);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
 
         glUseProgram(entityProgram);
-        glUniform2f(1, windowSize.x, windowSize.y);
-        glUniform1f(2, zoomMultiplier);
+        glUniform2f(0, windowSize.x, windowSize.y);
+        glUniform1f(1, zoomMultiplier);
     }
 
     void tick(long window, Terrarium terrarium) {
@@ -181,7 +195,6 @@ public final class Renderer {
         glUseProgram(program);
         render(skyVao, 4, GL_QUADS);
         glUseProgram(entityProgram);
-        glUniform2f(0, camara.pos.x, camara.pos.y);
         List<Entity> entityList = terrarium.getEntityList();
         try {
             for (Map.Entry<Entity, Chunk[]> entry : terrarium.getChunkMap().entrySet()) {
@@ -218,12 +231,12 @@ public final class Renderer {
 
         if (zoomInKey && zoomMultiplier >= -50) {
             zoomMultiplier -= 0.1f;
-            glUniform1f(2, zoomMultiplier);
+            glUniform1f(1, zoomMultiplier);
         }
 
         if (zoomOutKey && zoomMultiplier <= 50) {
             zoomMultiplier += 0.1f;
-            glUniform1f(2, zoomMultiplier);
+            glUniform1f(1, zoomMultiplier);
         }
 
         glfwSwapBuffers(window);
@@ -233,8 +246,8 @@ public final class Renderer {
     private FloatBuffer getEntityVertices(FloatBuffer buffer, Entity entity) {
         buffer.clear();
         Box box = entity.box;
-        float x = entity.getPosition().x;
-        float y = entity.getPosition().y;
+        float x = entity.getPosition().x - camara.pos.x;
+        float y = entity.getPosition().y - camara.pos.y;
         float bx = box.size.x / 2;
         float by = box.size.y / 2;
         return buffer
@@ -246,54 +259,72 @@ public final class Renderer {
 
     private FloatBuffer getBlockVertices(FloatBuffer buffer, Block block) {
         buffer.clear();
-        Box box = block.box;
-        float x = block.getPosition().x;
-        float y = block.getPosition().y;
-        float bx = box.size.x;
-        float by = box.size.y;
-        if (block.getPosition().equals(0, 20)) {
-            return buffer
-                    .put(x).put(y).put(getColorVertex(new Color(243, 11, 11)))
-                    .put(x).put(y + by).put(getColorVertex(new Color(26, 71, 220)))
-                    .put(x + bx).put(y + by).put(getColorVertex(new Color(101, 222, 81)))
-                    .put(x + bx).put(y).put(getColorVertex(new Color(222, 182, 81)));
-        } else {
-            switch (block.type) {
-                case "dirt" -> {
-                    return buffer
-                            .put(x).put(y).put(dirtColor)
-                            .put(x).put(y + by).put(dirtColor)
-                            .put(x + bx).put(y + by).put(dirtColor)
-                            .put(x + bx).put(y).put(dirtColor);
-                }
-                case "stone" -> {
-                    return buffer
-                            .put(x).put(y).put(stoneColor)
-                            .put(x).put(y + by).put(stoneColor)
-                            .put(x + bx).put(y + by).put(stoneColor)
-                            .put(x + bx).put(y).put(stoneColor);
-                }
-                case "grass" -> {
-                    return buffer
-                            .put(x).put(y).put(grassColor)
-                            .put(x).put(y + by).put(grassColor)
-                            .put(x + bx).put(y + by).put(grassColor)
-                            .put(x + bx).put(y).put(grassColor);
-                }
+        Vector2i position = block.getPosition();
+        float x = position.x - camara.pos.x;
+        float y = position.y - camara.pos.y;
+        switch (block.getId()) {
+            case 0 -> {
+                return buffer
+                        .put(x).put(y).put(dirtColor)
+                        .put(x).put(y + 1).put(dirtColor)
+                        .put(x + 1).put(y + 1).put(dirtColor)
+                        .put(x + 1).put(y).put(dirtColor);
+            }
+            case 1 -> {
+                return buffer
+                        .put(x).put(y).put(grassColor)
+                        .put(x).put(y + 1).put(grassColor)
+                        .put(x + 1).put(y + 1).put(grassColor)
+                        .put(x + 1).put(y).put(grassColor);
+            }
+            case 2 -> {
+                return buffer
+                        .put(x).put(y).put(stoneColor)
+                        .put(x).put(y + 1).put(stoneColor)
+                        .put(x + 1).put(y + 1).put(stoneColor)
+                        .put(x + 1).put(y).put(stoneColor);
+            }
+            case 3 -> {
+                return buffer
+                        .put(x).put(y).put(treeColor)
+                        .put(x).put(y + 1).put(treeColor)
+                        .put(x + 1).put(y + 1).put(treeColor)
+                        .put(x + 1).put(y).put(treeColor);
+            }
+            case 4 -> {
+                return buffer
+                        .put(x).put(y).put(iceColor)
+                        .put(x).put(y + 1).put(iceColor)
+                        .put(x + 1).put(y + 1).put(iceColor)
+                        .put(x + 1).put(y).put(iceColor);
+            }
+            case 5 -> {
+                return buffer
+                        .put(x).put(y).put(snowColor)
+                        .put(x).put(y + 1).put(snowColor)
+                        .put(x + 1).put(y + 1).put(snowColor)
+                        .put(x + 1).put(y).put(snowColor);
+            }
+            case 6 -> {
+                return buffer
+                        .put(x).put(y).put(sandColor)
+                        .put(x).put(y + 1).put(sandColor)
+                        .put(x + 1).put(y + 1).put(sandColor)
+                        .put(x + 1).put(y).put(sandColor);
             }
         }
         return buffer
                 .put(x).put(y).put(getColorVertex(new Color(243, 11, 11)))
-                .put(x).put(y + by).put(getColorVertex(new Color(26, 71, 220)))
-                .put(x + bx).put(y + by).put(getColorVertex(new Color(101, 222, 81)))
-                .put(x + bx).put(y).put(getColorVertex(new Color(222, 182, 81)));
+                .put(x).put(y + 1).put(getColorVertex(new Color(26, 71, 220)))
+                .put(x + 1).put(y + 1).put(getColorVertex(new Color(101, 222, 81)))
+                .put(x + 1).put(y).put(getColorVertex(new Color(222, 182, 81)));
     }
 
-    public static float[] getColorVertex(Color awtColor) {
+    private float[] getColorVertex(Color awtColor) {
         return awtColor.getColorComponents(new float[3]);
     }
 
-    public static float[] getVertex(float x, float y, Color color) {
+    private float[] getVertex(float x, float y, Color color) {
         float[] floatColor = color.getColorComponents(new float[3]);
         float[] vertex = new float[6];
         vertex[0] = x;
@@ -305,7 +336,7 @@ public final class Renderer {
         return vertex;
     }
 
-    public static float[] getVertices(float[]... v) {
+    private float[] getVertices(float[]... v) {
         int length = 0;
         for (float[] vertex : v) {
             length += vertex.length;
@@ -319,7 +350,7 @@ public final class Renderer {
         return vertices;
     }
 
-    public static int loadShader(String context, int type) {
+    private int loadShader(String context, int type) {
         int shader = glCreateShader(type);
         glShaderSource(shader, context);
         glCompileShader(shader);
@@ -329,7 +360,7 @@ public final class Renderer {
         return shader;
     }
 
-    public static void render(int vao, int indices, int type) {
+    private void render(int vao, int indices, int type) {
         glBindVertexArray(vao);
         glDrawElements(type, indices, GL_UNSIGNED_INT, 0);
     }

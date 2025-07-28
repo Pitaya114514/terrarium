@@ -2,14 +2,10 @@ package org.terrarium.core.game.block;
 
 import org.joml.Vector2i;
 import org.terrarium.core.game.Attribute;
-import org.terrarium.core.game.entity.Box;
-import org.terrarium.core.game.entity.Entity;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public final class Block {
-
     public static class Factory {
         private final String type;
         private ArrayList<Attribute> attributes;
@@ -32,23 +28,18 @@ public final class Block {
     }
 
     public final String type;
-    public final Box box = new Box(1, 1) {
-        @Override
-        public void collide(List<Entity> entities) {
-
-        }
-    };
     public final ArrayList<Attribute> attributes;
 
+    private int id = -1;
     private Vector2i position;
 
     private Block(String type, ArrayList<Attribute> otherAttributes) {
         this.type = type;
-
         this.attributes = otherAttributes;
     }
 
     public Block(Block otherBlock) {
+        this.id = otherBlock.id;
         this.type = otherBlock.type;
         if (otherBlock.position != null) {
             this.position = new Vector2i().set(otherBlock.position);
@@ -65,6 +56,17 @@ public final class Block {
             return;
         }
         this.position = position;
+    }
+
+    public int getId() {
+        if (id < 0) throw new IllegalStateException("The block is not initialized");
+        return id;
+    }
+
+    public void setId(int id) {
+        if (this.id < 0 && id >= 0) {
+            this.id = id;
+        }
     }
 
     @Override

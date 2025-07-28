@@ -1,17 +1,11 @@
 package org.terrarium.core.game.world;
 
-import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.terrarium.core.game.block.Block;
 
-import java.io.Serializable;
-import java.nio.IntBuffer;
 import java.util.Arrays;
 
-public class Chunk implements Serializable {
-    public record ChunkSource(Vector2i chunkPosition, long seed) {
-    }
-
+public class Chunk {
     public final Vector2i position = new Vector2i();
     public final Block[][] blockSquare = new Block[16][16];
     public final int total;
@@ -35,9 +29,10 @@ public class Chunk implements Serializable {
     @Override
     public String toString() {
         StringBuilder re = new StringBuilder();
+        re.append('(').append(position.x).append(", ").append(position.y).append(')').append('\n');
         for (Block[] blocks : blockSquare) {
             re.append(Arrays.toString(blocks));
-            re.append("\n");
+            re.append('\n');
         }
         return re.toString();
     }

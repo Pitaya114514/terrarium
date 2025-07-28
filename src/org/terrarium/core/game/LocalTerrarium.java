@@ -15,9 +15,6 @@ import org.terrarium.core.game.world.WorldGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -25,9 +22,8 @@ public class LocalTerrarium implements Terrarium {
     public static final Logger LOGGER = LogManager.getLogger(LocalTerrarium.class);
 
     public static Entity.Factory getPlayerEntityFactory() {
-        return new Entity.Factory("Player")
+        return new Entity.Factory("player")
                 .box(new Box(2, 3) {
-
                     @Override
                     public void collide(List<Entity> entities) {
 
@@ -50,8 +46,20 @@ public class LocalTerrarium implements Terrarium {
 
     public LocalTerrarium(GameInitializer initializer) {
         this.registeredCommands = initializer.initCommands();
-        this.registeredBlocks = initializer.initBlocks();
-        this.registeredEntities = ObjectArrays.concat(getPlayerEntityFactory().create(), initializer.initEntities());
+        Block[] b = initializer.initBlocks();
+        for (int i = 0; i < b.length; i++) {
+            if (b[i] != null) {
+                b[i].setId(i);
+            }
+        }
+        this.registeredBlocks = b;
+        Entity[] e = ObjectArrays.concat(getPlayerEntityFactory().create(), initializer.initEntities());
+        for (int i = 0; i < e.length; i++) {
+            if (e[i] != null) {
+                e[i].setId(i);
+            }
+        }
+        this.registeredEntities = e;
         this.registeredEffects = initializer.initEffects();
         this.registeredItems = initializer.initItems();
         this.worldGenerators = initializer.getWorldGenerators(registeredBlocks);
@@ -144,25 +152,7 @@ public class LocalTerrarium implements Terrarium {
 
     @Override
     public void setBlock(int x, int y, Block block) {
-
-    }
-
-    public void save() {
-        LOGGER.info("Saving world: {}", mainWorld);
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(mainWorld.getName() + ".wld"))) {
-            for (Map.Entry<Entity, Chunk[]> entry : mainWorld.chunkTable.entrySet()) {
-                for (Chunk chunk : entry.getValue()) {
-                    oos.writeObject(chunk);
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.error("Unable to save world: ", e);
-        }
-        LOGGER.info("{} is saved", mainWorld);
-    }
-
-    public World load() {
-        return null;
+        mainWorld.setBlock(x, y, block);
     }
 
     //    final List<Command> getCommandList() {

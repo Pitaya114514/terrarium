@@ -1,6 +1,7 @@
 package org.terrarium.core.client;
 
 import org.joml.Vector2f;
+import org.lwjgl.glfw.GLFWImage;
 import org.terrarium.Main;
 import org.terrarium.core.client.network.ClientCommunicator;
 import org.terrarium.core.client.network.RemoteTerrarium;
@@ -17,21 +18,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.terrarium.core.game.util.Util;
 
-import java.net.InetAddress;
 import java.util.HashSet;
 import java.util.Set;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.GLFW_FALSE;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_1;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_2;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_3;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_4;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_5;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_6;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_7;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_8;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_9;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_A;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_D;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
@@ -39,7 +30,6 @@ import static org.lwjgl.glfw.GLFW.GLFW_RESIZABLE;
 import static org.lwjgl.glfw.GLFW.GLFW_TRUE;
 import static org.lwjgl.glfw.GLFW.GLFW_VISIBLE;
 import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
-import static org.lwjgl.glfw.GLFW.glfwSetCharCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
 import static org.lwjgl.glfw.GLFW.glfwWindowHint;
 import static org.lwjgl.system.MemoryUtil.NULL;
@@ -55,30 +45,23 @@ public class TerrariumClient {
     public final ActionController actionController = new ActionController();
     public final ClientCommunicator communicator = new ClientCommunicator();
     public final Set<Server> servers = new HashSet<>();
-//    public Window window;
+    private final double[] cursorX = new double[1];
+    private final double[] cursorY = new double[1];
     private ResourcePack resourcePack;
     public Player player;
     private Util.Counter fpsCounter;
     private Terrarium terrarium;
 
-
     public TerrariumClient(ClientInitializer cInitializer, GameInitializer gInitializer) {
         LOGGER.info("Terrarium Client | {}", Main.VERSION);
         this.gameInitializer = gInitializer;
         this.configManager = new ConfigManager("client", "Client properties", cInitializer.init());
-//        this.window = new Window();
-//        window.setVisible(true);
     }
 
-    public void launch() {
-        this.player = new Player("Pitaya", PlayerDifficulty.CLASSIC);
-        runLocalTerrarium(player, gameInitializer, 1919810);
-//        try {
-//            runRemoteTerrarium(player, new Server("pitServer", InetAddress.getLoopbackAddress(), 25565));
-//        } catch (CommunicationException e) {
-//            LOGGER.error("Unable to connect to the server: ", e);
-//            return;
-//        }
+    public void launch(String name, Vector2f spawnPosition, long seed) {
+        LOGGER.info("Game arguments: \n  Name: {}\n  Seed: {}\n  SpawnPoint: {}", name, seed, spawnPosition);
+        this.player = new Player(name, PlayerDifficulty.CLASSIC);
+        runLocalTerrarium(player, gameInitializer, seed, spawnPosition);
         long window = createGameWindow();
 
         try {
@@ -112,17 +95,19 @@ public class TerrariumClient {
     }
 
     private void tick(long window) {
+        glfwGetCursorPos(window, cursorX, cursorY);
+        player.cursorPos.set(renderer.getGamePosX(cursorX[0]), renderer.getGamePosY(cursorY[0]));
         renderer.tick(window, terrarium);
         actionController.tick(player, terrarium);
     }
 
-    private void runLocalTerrarium(Player player, GameInitializer initializer, long seed) {
+    private void runLocalTerrarium(Player player, GameInitializer initializer, long seed, Vector2f spawnPosition) {
         this.terrarium = new LocalTerrarium(initializer);
         player.createEntity(terrarium);
         LOGGER.info("Loading world, Player: {}", player);
         LocalTerrarium lTerrarium = (LocalTerrarium) this.terrarium;
         lTerrarium.startWorld(seed);
-        lTerrarium.addEntity(player.getEntity(), new Vector2f(0, 80), player.name);
+        lTerrarium.addEntity(player.getEntity(), spawnPosition, player.name);
     }
 
     private void runRemoteTerrarium(Player player, Server server) throws CommunicationException {
@@ -153,50 +138,27 @@ public class TerrariumClient {
         }
 
         glfwSetKeyCallback(window, (window1, key, scancode, action, mods) -> {
+            final boolean isClicking = action != GLFW_RELEASE;
             switch (key) {
-                case GLFW_KEY_SPACE -> actionController.spaceKey = action != GLFW_RELEASE;
+                case GLFW_KEY_SPACE -> actionController.spaceKey = isClicking;
 
-                case GLFW_KEY_D -> actionController.rightKey = action != GLFW_RELEASE;
+                case GLFW_KEY_D -> actionController.rightKey = isClicking;
 
-                case GLFW_KEY_A -> actionController.leftKey = action != GLFW_RELEASE;
+                case GLFW_KEY_A -> actionController.leftKey = isClicking;
 
-                case GLFW_KEY_MINUS -> renderer.zoomInKey = action != GLFW_RELEASE;
+                case GLFW_KEY_MINUS -> renderer.zoomInKey = isClicking;
 
-                case GLFW_KEY_EQUAL -> renderer.zoomOutKey = action != GLFW_RELEASE;
-
-                case GLFW_KEY_RIGHT_SHIFT -> {
-                    if (terrarium instanceof LocalTerrarium lTerrarium) {
-                        lTerrarium.save();
-                    }
-                }
-//                case GLFW_KEY_H -> Main.getClient().player.entity().setHealth(Main.getClient().player.entity().getHealth() + 50);
-            }
-            if (action != GLFW_RELEASE) {
-                switch (key) {
-
-                    case GLFW_KEY_1 -> Main.getClient().player.backpackIndex = 0;
-
-                    case GLFW_KEY_2 -> Main.getClient().player.backpackIndex = 1;
-
-                    case GLFW_KEY_3 -> Main.getClient().player.backpackIndex = 2;
-
-                    case GLFW_KEY_4 -> Main.getClient().player.backpackIndex = 3;
-
-                    case GLFW_KEY_5 -> Main.getClient().player.backpackIndex = 4;
-
-                    case GLFW_KEY_6 -> Main.getClient().player.backpackIndex = 5;
-
-                    case GLFW_KEY_7 -> Main.getClient().player.backpackIndex = 6;
-
-                    case GLFW_KEY_8 -> Main.getClient().player.backpackIndex = 7;
-
-                    case GLFW_KEY_9 -> Main.getClient().player.backpackIndex = 8;
-                }
+                case GLFW_KEY_EQUAL -> renderer.zoomOutKey = isClicking;
             }
         });
-        glfwSetCharCallback(window, (window1, codepoint) -> {
+        glfwSetMouseButtonCallback(window, ((window1, button, action, mods) -> {
+            final boolean isClicking = action != GLFW_RELEASE;
+            switch (button) {
+                case GLFW_MOUSE_BUTTON_LEFT -> actionController.attack = isClicking;
 
-        });
+                case GLFW_MOUSE_BUTTON_RIGHT -> actionController.use = isClicking;
+            }
+        }));
 
         return window;
     }

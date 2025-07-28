@@ -1,13 +1,8 @@
 package org.terrarium.core.game.entity;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.joml.Vector2f;
-import org.joml.Vector2i;
 import org.terrarium.core.game.Attribute;
-import org.terrarium.core.game.block.Block;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 
 public final class Entity {
@@ -62,6 +57,9 @@ public final class Entity {
     public transient final LifeManager lifeManager;
     public transient final ArrayList<Attribute> attributes;
 
+    public int floatTime;
+
+    private int id = -1;
     private String name;
     private Vector2f position;
 
@@ -74,11 +72,13 @@ public final class Entity {
     }
 
     public Entity(Entity otherEntity) {
+        this.id = otherEntity.id;
         this.type = otherEntity.type;
         this.name = otherEntity.name;
         this.box = otherEntity.box;
         this.action = otherEntity.action;
         this.lifeManager = otherEntity.lifeManager;
+        this.floatTime = otherEntity.floatTime;
         if (otherEntity.position != null) {
             this.position = new Vector2f().set(otherEntity.position);
         }
@@ -110,5 +110,16 @@ public final class Entity {
             return;
         }
         this.name = name;
+    }
+
+    public int getId() {
+        if (id < 0) throw new IllegalStateException("The block is not initialized");
+        return id;
+    }
+
+    public void setId(int id) {
+        if (this.id < 0 && id >= 0) {
+            this.id = id;
+        }
     }
 }

@@ -11,8 +11,6 @@ import java.util.ArrayList;
 
 public class ChunkManager {
     private final ArrayList<Chunk> chunkHeap = new ArrayList<>();
-    private final ArrayList<Chunk> unloadedChunkHeap = new ArrayList<>();
-
     private final WorldGenerator generator;
     private final long seed;
     private final Block[] regBlocks;
@@ -24,57 +22,101 @@ public class ChunkManager {
     }
 
     public Block getBlock(int x, int y) {
-        int cx = x / 16;
-        int cy = y / 16;
+        int cx = (int) Math.floor(x / 16f);
+        int cy = (int) Math.floor(y / 16f);
         for (Chunk chunk : chunkHeap) {
-            Vector2i p = chunk.position;
-            if (p.x == cx && p.y == cy) {
-                return chunk.blockSquare[Math.abs(x % 16)][Math.abs(y % 16)];
+            if (chunk.position.equals(cx, cy)) {
+                return chunk.blockSquare[x - cx * 16][y - cy * 16];
             }
         }
         return null;
     }
 
-    public Chunk load(int x, int y) throws IOException {
-        //从内存加载
+    public void setBlock(int x, int y, Block block) {
+        int cx = (int) Math.floor(x / 16f);
+        int cy = (int) Math.floor(y / 16f);
         for (Chunk chunk : chunkHeap) {
-            Vector2i p = chunk.position;
-            if (p.x == x && p.y == y) {
+            if (chunk.position.equals(cx, cy)) {
+                if (block != null) {
+                    block.setPosition(new Vector2i(x, y));
+                }
+                chunk.blockSquare[x - cx * 16][y - cy * 16] = block;
+            }
+        }
+    }
+
+    public synchronized void save() throws IOException {
+        for (Chunk chunk : chunkHeap) {
+            Util.IO.saveChunks(Util.IO.serialize(chunk));
+        }
+    }
+
+    public void allocate(Chunk[] chunkArray, int x, int y, int length, int height) throws IOException {
+        int dl = length * 2 + 1;
+        int dh = height * 2 + 1;
+        if (chunkArray.length < dl * dh) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+        for (int i = 0; i < dl; i++) {
+            for (int j = 0; j < dh; j++) {
+                int chunkX = x + j - length;
+                int chunkY = y + i - height;
+                chunkArray[i * dl + j] = load(chunkX, chunkY);
+            }
+        }
+    }
+
+    public synchronized Chunk load(int x, int y) throws IOException {
+        for (Chunk chunk : chunkHeap) {
+            if (chunk.position.equals(x, y)) {
                 return chunk;
             }
         }
-        //从硬盘加载
+
         IntBuffer[] chunkData = Util.IO.loadChunks();
         if (chunkData != null) {
             for (IntBuffer chunkDatum : chunkData) {
                 if (chunkDatum.get() == x && chunkDatum.get() == y) {
                     chunkDatum.position(0);
-                    return Util.IO.deserialize(chunkDatum, regBlocks);
+                    Chunk deserialized = Util.IO.deserialize(chunkDatum, regBlocks);
+                    chunkHeap.add(deserialized);
+                    return deserialized;
                 }
             }
         }
-        //生成
-        Chunk generated = generator.generate(x, y, seed);
-        chunkHeap.add(generated);
-        return generated;
-    }
 
-    public void unload(int x, int y) {
-        for (int i = 0; i < chunkHeap.size(); i++) {
-            Chunk chunk = chunkHeap.get(i);
-            Vector2i p = chunk.position;
-            if (p.x == x && p.y == y) {
-                unloadedChunkHeap.add(chunk);
-                chunkHeap.remove(chunk);
+        WorldGenerator.Generator generated = generator.generate(x, y, seed);
+        Chunk chunk = generated.chunk();
+        Structure[] structures = generated.structures();
+        for (Structure structure : structures) {
+            if (structure.isGenerated()) continue;
+            Vector2i blockPos = structure.getChunkBlockPos();
+            Block[][] elements = structure.elements;
+            final int chunkSize = 16;
+            for (int i = 0; i < elements.length; i++) {
+                int bx = blockPos.x + i;
+                int cx = x + (bx / chunkSize);
+                bx %= chunkSize;
+
+                for (int j = 0; j < elements[i].length; j++) {
+                    int by = blockPos.y + j;
+                    int cy = y + (by / chunkSize);
+                    by %= chunkSize;
+
+                    Chunk targetChunk = (cx == x && cy == y) ? chunk : load(cx, cy);
+                    Block block = elements[i][j];
+
+                    if (block != null) {
+                        targetChunk.blockSquare[bx][by] = block;
+                        block.setPosition(new Vector2i(cx * chunkSize + bx, cy * chunkSize + by));
+                    } else {
+                        targetChunk.blockSquare[bx][by] = null;
+                    }
+                }
             }
+            structure.generate();
         }
-    }
-
-    public void save() throws IOException {
-        for (Chunk unloadedChunk : unloadedChunkHeap) {
-            Util.IO.saveChunks(Util.IO.serialize(unloadedChunk, regBlocks));
-        }
-        unloadedChunkHeap.clear();
-        unloadedChunkHeap.trimToSize();
+        chunkHeap.add(chunk);
+        return chunk;
     }
 }

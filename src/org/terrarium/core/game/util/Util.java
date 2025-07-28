@@ -5,7 +5,6 @@ import org.joml.Vector2i;
 import org.terrarium.core.game.block.Block;
 import org.terrarium.core.game.world.Chunk;
 
-import java.awt.*;
 import java.io.*;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -13,14 +12,8 @@ import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-
-import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL30.glBindVertexArray;
-import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 public final class Util {
     private Util() {}
@@ -116,21 +109,12 @@ public final class Util {
             return Arrays.deepToString(new Object[]{buffer.array()});
         }
 
-        public static IntBuffer serialize(Chunk chunk, Block[] regBlocks) {
+        public static IntBuffer serialize(Chunk chunk) {
             IntBuffer map = IntBuffer.allocate(CHUNK_CAPACITY);
             map.put(chunk.position.x).put(chunk.position.y);
             for (Block[] blocks : chunk.blockSquare) {
                 for (Block block : blocks) {
-                    if (block != null) {
-                        for (int id = 0; id < regBlocks.length; id++) {
-                            if (regBlocks[id] != null && regBlocks[id].type.equals(block.type)) {
-                                map.put(id);
-                            }
-                        }
-                    } else {
-                        map.put(-1);
-                    }
-
+                    map.put(block != null ? block.getId() : -1);
                 }
             }
             return map.flip();
